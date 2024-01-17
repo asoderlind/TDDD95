@@ -1,11 +1,17 @@
-5
+8
 how now brown <animal>
 <foo> now <color> cow
 who are you
 <a> <b> <a>
 <a> b
 c <a>
-<b> <b> <b>
-my my my
-a <a> c <b>
-a <a> c <b>
+<a> beer
+bab
+<a> <a> <c> <c>
+<x> <b> <b> hello
+<a> <a> <c> <c>
+<b> <b> <x> hello
+<a> <c> <a> <c>
+<x> <x> <a> hello
+<a> <b>
+<c> <d>
