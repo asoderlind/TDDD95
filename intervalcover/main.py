@@ -4,14 +4,20 @@
 def cover(a, b, intervals):
     # sort intervals by start
     sorted_intervals = sorted(intervals, key=lambda x: x[0])
+
+    # keep track of indices in the original list
     unsorted_indices = []
 
-    # Find initial interval that covers a and stretches as far right as possible
-    initial_candidates = [x for x in sorted_intervals if x[0] <= a]
-    if len(initial_candidates) == 0:
+    # Find all intervals that cover a
+    intervals_a = [x for x in sorted_intervals if x[0] <= a]
+
+    # if there are no intervals that cover a, return impossible
+    if len(intervals_a) == 0:
         return "impossible"
 
-    interval_1 = max(initial_candidates, key=lambda x: x[1])
+    # if there are multiple intervals that cover a,
+    # choose the one that stretches the furthest right
+    interval_1 = max(intervals_a, key=lambda x: x[1])
     sorted_index = sorted_intervals.index(interval_1)
 
     unsorted_indices = [intervals.index(interval_1)]
