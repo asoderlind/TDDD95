@@ -32,8 +32,10 @@ for i in range(q):
     children[i] -= diff
 for i in range(M % q):
     children[i] -= 1
+
 z = 0
 for i in children:
     z += i * i
+
 print(children)
 print(z)
