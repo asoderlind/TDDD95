@@ -3,23 +3,24 @@
 
 using namespace std;
 
-// From description
-const int MAX_N = 110;
-constexpr long double EPS = 1e-5L;
+typedef long double ld;
 
-bool is_zero(long double x)
+const int MAX_N = 110;
+constexpr ld EPS = 1e-5L;
+
+bool is_zero(ld x)
 {
     return abs(x) < EPS;
 }
 
 struct AugmentedMatrix
 {
-    double mat[MAX_N][MAX_N + 1];
+    ld mat[MAX_N][MAX_N + 1];
 };
 
 struct ColumnVector
 {
-    double vec[MAX_N];
+    ld vec[MAX_N];
 };
 
 void debugPrintMatrix(int N, AugmentedMatrix Aug)
@@ -41,9 +42,6 @@ void debugPrintMatrix(int N, AugmentedMatrix Aug)
 /// @return the solution vector
 pair<ColumnVector, ColumnVector> GaussElimination(int N, AugmentedMatrix Aug)
 {
-    // std::cout << "Before forward elimination:\n";
-    // debugPrintMatrix(N, Aug);
-
     for (int i = 0; i < N - 1; ++i)
     {
         // Find the row index with the largest absolute pivot
@@ -51,7 +49,7 @@ pair<ColumnVector, ColumnVector> GaussElimination(int N, AugmentedMatrix Aug)
         int l = i;
         for (int j = i + 1; j < N; ++j)
         {
-            if (abs(Aug.mat[j][i]) > abs(Aug.mat[l][i]))
+            if (Aug.mat[j][i] - Aug.mat[l][i] > EPS)
             {
                 l = j;
             }
@@ -83,7 +81,7 @@ pair<ColumnVector, ColumnVector> GaussElimination(int N, AugmentedMatrix Aug)
             // the multiplier
             for (int k = N; k >= i; --k)
             {
-                double multiplier = (Aug.mat[j][i] / Aug.mat[i][i]);
+                ld multiplier = (Aug.mat[j][i] / Aug.mat[i][i]);
                 Aug.mat[j][k] -= Aug.mat[i][k] * multiplier;
             }
         }
@@ -104,7 +102,7 @@ pair<ColumnVector, ColumnVector> GaussElimination(int N, AugmentedMatrix Aug)
             FreeVars.vec[j] = 1;
             continue;
         }
-        double sum = 0.f;
+        ld sum = 0.f;
         // the inner loop variable k represents the
         // current variable being considered
         for (int k = j + 1; k < N; ++k)
@@ -116,7 +114,7 @@ pair<ColumnVector, ColumnVector> GaussElimination(int N, AugmentedMatrix Aug)
             }
             sum += Aug.mat[j][k] * Ans.vec[k];
         }
-        double variable_multiplier = Aug.mat[j][j];
+        ld variable_multiplier = Aug.mat[j][j];
         Ans.vec[j] = (Aug.mat[j][N] - sum) / variable_multiplier;
     }
 
@@ -162,7 +160,7 @@ int checkSystem(int N, AugmentedMatrix Aug)
         // Check for linear dependence
         for (int j = i + 1; j < N && !is_inconsistent; ++j)
         {
-            double factor = -1;
+            ld factor = -1;
             bool parallel = true;
             bool factor_is_set = false;
 
@@ -244,6 +242,7 @@ int main()
         {
             std::cout << "inconsistent" << endl;
         }
+        else
         {
             auto [x, free] = GaussElimination(n, Aug);
             for (int i = 0; i < n; ++i)
