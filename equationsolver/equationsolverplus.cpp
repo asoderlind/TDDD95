@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cmath>
+#include <vector>
 
 using namespace std;
 
@@ -40,16 +41,16 @@ void debugPrintMatrix(int N, AugmentedMatrix Aug)
 /// @param N number of equations
 /// @param Aug the augmented matrix
 /// @return the solution vector
-pair<ColumnVector, ColumnVector> GaussElimination(int N, AugmentedMatrix Aug)
+pair<ColumnVector, vector<bool>> GaussElimination(int N, AugmentedMatrix Aug)
 {
-    for (int i = 0; i < N - 1; ++i)
+    for (int i = 0; i < N; ++i)
     {
         // Find the row index with the largest absolute pivot
         // value and assign it to l
         int l = i;
         for (int j = i + 1; j < N; ++j)
         {
-            if (Aug.mat[j][i] - Aug.mat[l][i] > EPS)
+            if (abs(Aug.mat[j][i]) > abs(Aug.mat[l][i]))
             {
                 l = j;
             }
@@ -58,6 +59,16 @@ pair<ColumnVector, ColumnVector> GaussElimination(int N, AugmentedMatrix Aug)
         // this is to minimize floating point errors
         for (int k = i; k <= N; ++k)
             swap(Aug.mat[i][k], Aug.mat[l][k]);
+
+        // Normalize the pivot row
+        ld pivotValue = Aug.mat[i][i];
+        if (!is_zero(pivotValue)) // Ensure pivotValue is not zero to avoid division by zero
+        {
+            for (int k = i; k <= N; ++k)
+            {
+                Aug.mat[i][k] /= pivotValue;
+            }
+        }
 
         // Check if the row is all 0
         bool all_zero = true;
@@ -69,7 +80,6 @@ pair<ColumnVector, ColumnVector> GaussElimination(int N, AugmentedMatrix Aug)
                 break;
             }
         }
-
         if (all_zero)
             continue;
 
@@ -79,9 +89,9 @@ pair<ColumnVector, ColumnVector> GaussElimination(int N, AugmentedMatrix Aug)
             // Start from the back of each row and
             // subtract the row above multiplied by
             // the multiplier
+            ld multiplier = (Aug.mat[j][i] / Aug.mat[i][i]);
             for (int k = N; k >= i; --k)
             {
-                ld multiplier = (Aug.mat[j][i] / Aug.mat[i][i]);
                 Aug.mat[j][k] -= Aug.mat[i][k] * multiplier;
             }
         }
@@ -92,30 +102,34 @@ pair<ColumnVector, ColumnVector> GaussElimination(int N, AugmentedMatrix Aug)
 
     // Backward substitution
     ColumnVector Ans = {0};
-    ColumnVector FreeVars = {0};
+    vector<bool> FreeVars(MAX_N);
     // the loop variable j represents the current
     // equation being considered
     for (int j = N - 1; j >= 0; --j)
     {
+        // Check if the diagonal element is zero (indicating a free variable)
         if (is_zero(Aug.mat[j][j]))
         {
-            FreeVars.vec[j] = 1;
+            FreeVars[j] = true;
             continue;
         }
-        ld sum = 0.f;
         // the inner loop variable k represents the
         // current variable being considered
+        ld sum = 0.0;
+        bool dependent = false;
         for (int k = j + 1; k < N; ++k)
         {
-            if (!is_zero(Aug.mat[j][k]) && abs(FreeVars.vec[k]) == 1)
-            {
-                FreeVars.vec[j] = 1;
-                continue;
-            }
             sum += Aug.mat[j][k] * Ans.vec[k];
+            if (!is_zero(Aug.mat[j][k]) && FreeVars[k])
+            {
+                dependent = true;
+            }
         }
-        ld variable_multiplier = Aug.mat[j][j];
-        Ans.vec[j] = (Aug.mat[j][N] - sum) / variable_multiplier;
+        FreeVars[j] = dependent;
+        if (!dependent)
+        {
+            Ans.vec[j] = (Aug.mat[j][N] - sum) / Aug.mat[j][j];
+        }
     }
 
     return {Ans, FreeVars};
@@ -247,7 +261,7 @@ int main()
             auto [x, free] = GaussElimination(n, Aug);
             for (int i = 0; i < n; ++i)
             {
-                if (free.vec[i])
+                if (free[i])
                 {
                     std::cout << "? ";
                 }
