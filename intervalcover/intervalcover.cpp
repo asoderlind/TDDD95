@@ -80,11 +80,18 @@ pair<int, vector<int>> cover(pair<double, double> interval, vector<pair<double, 
         int nextIndex = -1;
         for (int i = currentIndex; i < sortedIntervals.size(); ++i)
         {
-            if (sortedIntervals[i].first <= currentEnd && sortedIntervals[i].second > nextEnd)
+            if (sortedIntervals[i].first <= currentEnd)
             {
+                if (sortedIntervals[i].second > nextEnd)
+                {
 
-                nextEnd = sortedIntervals[i].second;
-                nextIndex = i;
+                    nextEnd = sortedIntervals[i].second;
+                    nextIndex = i;
+                }
+            }
+            else
+            {
+                break; // We have reached the end of the intervals that can extend the coverage
             }
         }
 
