@@ -6,10 +6,15 @@ def cover(a, b, intervals):
     sorted_intervals = sorted(intervals, key=lambda x: x[0])
 
     # keep track of indices in the original list
-    unsorted_indices = []
+    selected_indices = []
 
     # Find all intervals that cover a
-    intervals_a = [x for x in sorted_intervals if x[0] <= a]
+    intervals_a = []
+    for i in range(len(sorted_intervals)):
+        if sorted_intervals[i][0] <= a:
+            intervals_a.append(sorted_intervals[i])
+        else:
+            break
 
     # if there are no intervals that cover a, return impossible
     if len(intervals_a) == 0:
@@ -20,28 +25,31 @@ def cover(a, b, intervals):
     interval_1 = max(intervals_a, key=lambda x: x[1])
     sorted_index = sorted_intervals.index(interval_1)
 
-    unsorted_indices = [intervals.index(interval_1)]
+    selected_indices.append(intervals.index(interval_1))
 
-    cover = interval_1
+    furthest_end = interval_1[1]
 
-    while cover[1] < b:
-        candidates = [
-            x for x in sorted_intervals[sorted_index + 1 :] if x[0] <= cover[1]
-        ]
+    while furthest_end < b:
+        candidates = []
+        for i in range(sorted_index + 1, len(sorted_intervals)):
+            if sorted_intervals[i][0] <= furthest_end:
+                candidates.append(sorted_intervals[i])
+            else:
+                break
         if len(candidates) == 0:
             return "impossible"
         next_interval = max(candidates, key=lambda x: x[1])
 
         # if the best candidate does not extend the cover, return impossible
-        if next_interval[1] <= cover[1]:
+        if next_interval[1] <= furthest_end:
             return "impossible"
-        else:
-            sorted_index = sorted_intervals.index(next_interval)
-            unsorted_indices.append(intervals.index(next_interval))
-            cover = next_interval
+
+        sorted_index = sorted_intervals.index(next_interval)
+        selected_indices.append(intervals.index(next_interval))
+        furthest_end = next_interval[1]
 
     return (
-        str(len(unsorted_indices)) + "\n" + " ".join([str(x) for x in unsorted_indices])
+        str(len(selected_indices)) + "\n" + " ".join([str(x) for x in selected_indices])
     )
 
 
