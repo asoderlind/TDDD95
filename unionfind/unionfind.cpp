@@ -1,10 +1,20 @@
+/** TDDD95: Lab 1 - unionfind
+ * Author: Axel Söderlind
+ * Date:   2024-01-25
+ * This problem is about implementing a Union-Find data structure.
+ * We use the DisjointSet class to solve this problem. We initialize
+ * the data structure with n elements, each in its own set. We then
+ * iterate through the queries and perform the appropriate operation
+ * for each query.
+ *
+ * Complexity: O(logn) where n is the number of elements and q is the number of queries.
+ * Space: O(n) where n is the number of elements.
+ */
 #include <vector>
 #include <iostream>
 
 using namespace std;
 
-// The DisjointSet class represents a Union-Find data structure
-// that keeps track of a set of elements partitioned into a number of disjoint (non-overlapping) subsets.
 class DisjointSet
 {
     // Stores the parent of each element. Initially, each element is its own parent.
@@ -30,7 +40,8 @@ public:
     }
 
     // Merges the sets containing elements a and b.
-    // Uses the rank to attach the smaller tree to the root of the larger tree to maintain balance.
+    // Uses the rank to attach the smaller tree to the
+    // root of the larger tree to maintain balance.
     void union_sets(int a, int b)
     {
         a = find(a);
@@ -54,15 +65,14 @@ public:
 
 int main()
 {
-    // Disable synchronization with C I/O for performance improvement
-    std::ios::sync_with_stdio(false);
-    // Untie cin and cout for performance improvement
-    std::cin.tie(NULL);
+    std::ios::sync_with_stdio(false); // Disable sync with C to improve performance
+    std::cin.tie(NULL);               // Disable flushing of cout before cin is performed
 
     int N, Q;
 
     // Read the number of elements (N) and the number of queries (Q)
     cin >> N >> Q;
+
     // Initialize DisjointSet with N elements
     DisjointSet ds(N);
 
