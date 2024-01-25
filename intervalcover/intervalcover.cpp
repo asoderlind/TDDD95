@@ -29,7 +29,7 @@ constexpr ld EPS = 1e-9L;
 /// @param interval
 /// @param componentIntervals
 /// @return
-pair<int, vector<int>> cover(pair<double, double> interval, vector<pair<double, double>> componentIntervals)
+pair<int, vector<int>> cover(pair<double, double> interval, vector<pair<double, double>> componentIntervals, bool verbose = false)
 {
     // Sort the intervals by their starting point
     vector<pair<double, double>> sortedIntervals = componentIntervals;
@@ -37,37 +37,34 @@ pair<int, vector<int>> cover(pair<double, double> interval, vector<pair<double, 
 
     vector<int> selectedIndices;
 
-    int currentIndex = 0;
+    int bestIndex = -1;
+    double furthestEnd = -INF;
 
-    // Find all intervals that cover a
+    // Find all intervals that cover a and stretch furthest to the right
     vector<pair<double, double>> intervals_a;
-    for (size_t i = 0; i < sortedIntervals.size(); i++)
+    for (size_t i = 0; i < componentIntervals.size(); i++)
     {
-        if (sortedIntervals[i].first <= interval.first)
+        if (componentIntervals[i].first <= interval.first && componentIntervals[i].second > furthestEnd)
         {
-            intervals_a.push_back(sortedIntervals[i]);
-        }
-        else
-        {
-            break;
+            furthestEnd = componentIntervals[i].second;
+            bestIndex = i;
         }
     }
 
     // If there are no intervals that cover a, return impossible
-    if (intervals_a.empty())
+    if (bestIndex == -1)
     {
         return {-1, vector<int>()};
     }
 
-    // Choose the one that stretches the furthest right
-    auto interval_1 = *max_element(intervals_a.begin(), intervals_a.end(),
-                                   [](const pair<double, double> &a, const pair<double, double> &b)
-                                   {
-                                       return a.second < b.second;
-                                   });
-    selectedIndices.push_back(find(componentIntervals.begin(), componentIntervals.end(), interval_1) - componentIntervals.begin());
+    selectedIndices.push_back(bestIndex);
 
-    double currentEnd = interval_1.second;
+    if (verbose)
+    {
+        cout << "Interval is: " << componentIntervals[bestIndex].first << " " << componentIntervals[bestIndex].second << nl;
+    }
+
+    double currentEnd = furthestEnd;
 
     // Iterate through the intervals to cover the whole range
     while (currentEnd < interval.second)
@@ -91,7 +88,6 @@ pair<int, vector<int>> cover(pair<double, double> interval, vector<pair<double, 
 
         selectedIndices.push_back(bestIndex);
         currentEnd = furthestEnd;
-        currentIndex = bestIndex + 1;
     }
 
     return {selectedIndices.size(), selectedIndices};
