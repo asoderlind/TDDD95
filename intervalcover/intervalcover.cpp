@@ -25,10 +25,22 @@ constexpr ll INF = 0x3f3f3f3f;
 constexpr ll INFLL = 0x3f3f3f3f3f3f3f3f;
 constexpr ld EPS = 1e-9L;
 
-/// @brief
-/// @param interval
-/// @param componentIntervals
-/// @return
+int interval2originalIndex(pair<double, double> interval, vector<pair<double, double>> originalIntervals)
+{
+    for (size_t i = 0; i < originalIntervals.size(); i++)
+    {
+        if (originalIntervals[i] == interval)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/// @brief Cover the interval with the minimum number of intervals
+/// @param interval The interval to cover
+/// @param componentIntervals The intervals to cover with
+/// @return A pair containing the number of intervals required to cover the interval and the indices of the intervals used
 pair<int, vector<int>> cover(pair<double, double> interval, vector<pair<double, double>> componentIntervals, bool verbose = false)
 {
     // Sort the intervals by their starting point
@@ -41,12 +53,11 @@ pair<int, vector<int>> cover(pair<double, double> interval, vector<pair<double, 
     double furthestEnd = -INF;
 
     // Find all intervals that cover a and stretch furthest to the right
-    vector<pair<double, double>> intervals_a;
-    for (size_t i = 0; i < componentIntervals.size(); i++)
+    for (size_t i = 0; i < sortedIntervals.size(); i++)
     {
-        if (componentIntervals[i].first <= interval.first && componentIntervals[i].second > furthestEnd)
+        if (sortedIntervals[i].first <= interval.first && sortedIntervals[i].second > furthestEnd)
         {
-            furthestEnd = componentIntervals[i].second;
+            furthestEnd = sortedIntervals[i].second;
             bestIndex = i;
         }
     }
@@ -57,37 +68,34 @@ pair<int, vector<int>> cover(pair<double, double> interval, vector<pair<double, 
         return {-1, vector<int>()};
     }
 
-    selectedIndices.push_back(bestIndex);
+    selectedIndices.push_back(interval2originalIndex(sortedIntervals[bestIndex], componentIntervals));
 
-    if (verbose)
-    {
-        cout << "Interval is: " << componentIntervals[bestIndex].first << " " << componentIntervals[bestIndex].second << nl;
-    }
-
+    int currentIndex = bestIndex + 1;
     double currentEnd = furthestEnd;
 
     // Iterate through the intervals to cover the whole range
     while (currentEnd < interval.second)
     {
-        double furthestEnd = currentEnd;
-        int bestIndex = -1;
-
-        for (int i = 0; i < componentIntervals.size(); ++i)
+        double nextEnd = -INF;
+        int nextIndex = -1;
+        for (int i = currentIndex; i < sortedIntervals.size(); ++i)
         {
-            if (componentIntervals[i].first <= currentEnd && componentIntervals[i].second > furthestEnd)
+            if (sortedIntervals[i].first <= currentEnd && sortedIntervals[i].second > nextEnd)
             {
-                furthestEnd = componentIntervals[i].second;
-                bestIndex = i;
+
+                nextEnd = sortedIntervals[i].second;
+                nextIndex = i;
             }
         }
 
-        if (bestIndex == -1)
+        if (nextIndex == -1)
         { // No interval can extend the coverage
             return {-1, vector<int>()};
         }
 
-        selectedIndices.push_back(bestIndex);
-        currentEnd = furthestEnd;
+        selectedIndices.push_back(interval2originalIndex(sortedIntervals[nextIndex], componentIntervals));
+        currentEnd = nextEnd;
+        currentIndex = nextIndex + 1;
     }
 
     return {selectedIndices.size(), selectedIndices};
