@@ -37,6 +37,8 @@ pair<int, vector<int>> cover(pair<double, double> interval, vector<pair<double, 
 
     vector<int> selectedIndices;
 
+    int currentIndex = 0;
+
     // Find all intervals that cover a
     vector<pair<double, double>> intervals_a;
     for (size_t i = 0; i < sortedIntervals.size(); i++)
@@ -63,7 +65,6 @@ pair<int, vector<int>> cover(pair<double, double> interval, vector<pair<double, 
                                    {
                                        return a.second < b.second;
                                    });
-    auto sortedIndex = find(sortedIntervals.begin(), sortedIntervals.end(), interval_1) - sortedIntervals.begin();
     selectedIndices.push_back(find(componentIntervals.begin(), componentIntervals.end(), interval_1) - componentIntervals.begin());
 
     double currentEnd = interval_1.second;
@@ -90,6 +91,7 @@ pair<int, vector<int>> cover(pair<double, double> interval, vector<pair<double, 
 
         selectedIndices.push_back(bestIndex);
         currentEnd = furthestEnd;
+        currentIndex = bestIndex + 1;
     }
 
     return {selectedIndices.size(), selectedIndices};
