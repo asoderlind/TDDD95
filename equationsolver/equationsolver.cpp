@@ -1,3 +1,16 @@
+/** TDDD95 Lab 1: Equation Solver
+ * Author: Axel Söderlind
+ * Date:   2021-01-25
+ * We use Gaussian Elimination to solve the system of equations.
+ * We first perform forward elimination to get the matrix in row
+ * echelon form. We then perform backward substitution to get the
+ * solution vector. We also check the system of equations for
+ * consistency and linear dependence.
+ *
+ * Complexity: O(n^3) where n is the number of equations.
+ * Space: O(n^2) where n is the number of equations.
+ *
+ */
 #include <iostream>
 
 using namespace std;

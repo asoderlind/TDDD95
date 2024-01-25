@@ -1,3 +1,16 @@
+/** TDDD95: Lab 1 - equationsolverplus
+ * Author: Axel Söderlind
+ * Date:   2024-01-25
+ * This problem is about solving a system of linear equations.
+ * We use Gaussian Elimination to solve this problem. We first
+ * perform forward elimination to get the matrix in row echelon
+ * form. We then perform backward substitution to get the
+ * solution vector. We also check the system of equations for
+ * consistency and linear dependence.
+ *
+ * Complexity: O(n^3) where n is the number of equations.
+ * Space: O(n^2) where n is the number of equations.
+ */
 #include <iostream>
 #include <cmath>
 #include <vector>
