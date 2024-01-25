@@ -6,230 +6,132 @@ using namespace std;
 
 typedef long double ld;
 
-const int MAX_N = 110;
 constexpr ld EPS = 1e-5L;
 
+/// @brief Checks if a number is zero
+/// @param x
+/// @return true if x is zero, false otherwise
 bool is_zero(ld x)
 {
     return abs(x) < EPS;
 }
 
-struct AugmentedMatrix
-{
-    ld mat[MAX_N][MAX_N + 1];
-};
-
-struct ColumnVector
-{
-    ld vec[MAX_N];
-};
-
-void debugPrintMatrix(int N, AugmentedMatrix Aug)
-{
-    for (int i = 0; i < N; ++i)
-    {
-        std::cout << "[ ";
-        for (int j = 0; j <= N; ++j)
-        {
-            std::cout << Aug.mat[i][j] << " ";
-        }
-        std::cout << "]\n";
-    }
-}
-
 /// @brief Performs Gauss Elimination on the augmented matrix (multiple solutions)
 /// @param N number of equations
 /// @param Aug the augmented matrix
+/// @param verbose whether to print the augmented matrix
 /// @return the solution vector
-pair<ColumnVector, vector<bool>> GaussElimination(int N, AugmentedMatrix Aug)
+pair<vector<ld>, vector<bool>> GaussElimination(int N, vector<vector<ld>> Aug, bool verbose = false)
 {
-    for (int i = 0; i < N; ++i)
+    int num_rows = Aug.size();
+    int num_cols = (int)Aug[0].size() - 1;
+
+    // Keep track of the pivot columns
+    vector<int> pivot;
+    // outer loop variable j represents the current
+    // column being considered
+    // r keeps track of row to start inner loop at
+    for (int j = 0, r = 0; j < num_cols; j++)
     {
-        // Find the row index with the largest absolute pivot
-        // value and assign it to l
-        int l = i;
-        for (int j = i + 1; j < N; ++j)
-        {
-            if (abs(Aug.mat[j][i]) > abs(Aug.mat[l][i]))
-            {
-                l = j;
-            }
-        }
-        // swap row i with row l (row with largest pivot value)
-        // this is to minimize floating point errors
-        for (int k = i; k <= N; ++k)
-            swap(Aug.mat[i][k], Aug.mat[l][k]);
+        // Keep track of the max absolute value in the
+        // current column and the row it is in
+        pair<ld, int> best(0, -1);
 
-        // Normalize the pivot row
-        ld pivotValue = Aug.mat[i][i];
-        if (!is_zero(pivotValue)) // Ensure pivotValue is not zero to avoid division by zero
+        // inner loop variable i represents the current
+        // row being considered, starting at r
+        for (int i = r; i < num_rows; i++)
         {
-            for (int k = i; k <= N; ++k)
-            {
-                Aug.mat[i][k] /= pivotValue;
-            }
+            // if the current element is greater than the
+            // current max, update the max
+            best = max(best, pair(abs(Aug[i][j]), i));
         }
-
-        // Check if the row is all 0
-        bool all_zero = true;
-        for (int j = i; j <= N; ++j)
+        // if the max is greater than EPS, it means
+        // there is a nonzero element in the column
+        // and we can pivot
+        if (best.first > EPS)
         {
-            if (!is_zero(Aug.mat[i][j]))
+            // swap the current row with the row with the
+            // max element
+            swap(Aug[r], Aug[best.second]);
+
+            // Go through the rows below the current row
+            // and eliminate the current column
+            for (int i = r + 1; i < num_rows; i++)
             {
-                all_zero = false;
-                break;
+                ld multiplier = Aug[i][j] / Aug[r][j];
+                for (int k = j; k <= num_cols; k++)
+                {
+                    Aug[i][k] -= Aug[r][k] * multiplier;
+                }
             }
+            pivot.push_back(j);
+            r++;
         }
-        if (all_zero)
-            continue;
+    }
 
-        // Forward elimination
-        for (int j = i + 1; j < N; ++j)
+    // After forward elimination, refine the matrix to its row-echelon form
+    int num_pivots = pivot.size();
+    for (int i = 0; i < num_pivots; i++)
+    {
+        for (int k = 0; k < i; k++)
         {
-            // Start from the back of each row and
-            // subtract the row above multiplied by
-            // the multiplier
-            ld multiplier = (Aug.mat[j][i] / Aug.mat[i][i]);
-            for (int k = N; k >= i; --k)
+            ld f = Aug[k][pivot[i]] / Aug[i][pivot[i]];
+            for (int j = pivot[i]; j <= num_cols; j++)
             {
-                Aug.mat[j][k] -= Aug.mat[i][k] * multiplier;
+                Aug[k][j] -= Aug[i][j] * f;
             }
         }
     }
 
-    // std::cout << "After forward elimination:\n";
-    // debugPrintMatrix(N, Aug);
+    // print the augmented matrix
+    if (verbose)
+    {
+        for (int i = 0; i < num_rows; i++)
+        {
+            for (int j = 0; j <= num_cols; j++)
+            {
+                if (j == num_cols)
+                    cerr << "| ";
+                cerr << Aug[i][j] << " ";
+            }
+            cerr << "\n";
+        }
+    }
 
-    // Backward substitution
-    ColumnVector Ans = {0};
-    vector<bool> FreeVars(MAX_N);
+    // Check for inconsistent system
+    for (int i = num_pivots; i < num_rows; i++)
+    {
+        if (!is_zero(Aug[i][num_cols]))
+        {
+            return {{}, {}}; // Return empty vectors if the system is inconsistent
+        }
+    }
+
+    // Backward substitution to find the solution vector
+    vector<ld> Ans(num_cols);
+    vector<bool> FreeVars(num_cols, true); // Init all variables as free
     // the loop variable j represents the current
     // equation being considered
-    for (int j = N - 1; j >= 0; --j)
+    for (int i = num_pivots - 1; i >= 0; i--)
     {
-        // Check if the diagonal element is zero (indicating a free variable)
-        if (is_zero(Aug.mat[j][j]))
+        bool single = true;               // Flag to check if the current variable is a free variable
+        Ans[pivot[i]] = Aug[i][num_cols]; // Set the initial value of the solution for the current variable
+
+        // Calculate the actual value of the variable by considering its dependencies
+        for (int j = pivot[i] + 1; j < num_cols; j++)
         {
-            FreeVars[j] = true;
-            continue;
+            Ans[pivot[i]] -= Ans[j] * Aug[i][j];
+            single &= is_zero(Aug[i][j]); // If the current variable depends on another, it is not free
         }
-        // the inner loop variable k represents the
-        // current variable being considered
-        ld sum = 0.0;
-        bool dependent = false;
-        for (int k = j + 1; k < N; ++k)
+        Ans[pivot[i]] /= Aug[i][pivot[i]]; // Normalize the solution for the current variable
+
+        // If the variable is not dependent on others, mark it as not free
+        if (single)
         {
-            sum += Aug.mat[j][k] * Ans.vec[k];
-            if (!is_zero(Aug.mat[j][k]) && FreeVars[k])
-            {
-                dependent = true;
-            }
-        }
-        FreeVars[j] = dependent;
-        if (!dependent)
-        {
-            Ans.vec[j] = (Aug.mat[j][N] - sum) / Aug.mat[j][j];
+            FreeVars[pivot[i]] = false;
         }
     }
-
-    return {Ans, FreeVars};
-}
-
-/// @brief Checks the system of equations for consistency
-/// @param N number of equations
-/// @param Aug the augmented matrix
-/// @return flag 0 if system has unique solution, 1 if multiple, 2 if inconsistent
-int checkSystem(int N, AugmentedMatrix Aug)
-{
-    bool has_multiple = false;
-    bool is_inconsistent = false;
-
-    // Check row by row
-    for (int i = 0; i < N && !is_inconsistent; ++i)
-    {
-        bool all_zero = true;
-
-        // Go through the columns to check if all coefficients are 0
-        for (int j = 0; j < N; j++)
-        {
-            if (Aug.mat[i][j] != 0)
-            {
-                all_zero = false;
-                break;
-            }
-        }
-
-        // If all the coefficients are 0, check if the RHS is 0
-        if (all_zero)
-        {
-            if (Aug.mat[i][N] != 0)
-                // 0 != 0 is inconsistent
-                is_inconsistent = true;
-            else
-                // 0 == 0 results in inf solutions
-                has_multiple = true;
-            continue;
-        }
-
-        // Check for linear dependence
-        for (int j = i + 1; j < N && !is_inconsistent; ++j)
-        {
-            ld factor = -1;
-            bool parallel = true;
-            bool factor_is_set = false;
-
-            for (int k = 0; k < N && parallel; k++)
-            {
-                // if variable is 0 for both equations, skip
-                if (abs(Aug.mat[i][k]) == 0 && abs(Aug.mat[j][k]) == 0)
-                    continue;
-
-                // if one is 0 and the other is not, not parallel
-                if (abs(Aug.mat[i][k]) == 0 || abs(Aug.mat[j][k]) == 0)
-                {
-                    parallel = false;
-                }
-                // if factor not set, set it
-                else
-                {
-                    if (!factor_is_set)
-                    {
-                        // Set factor to the ratio of the coefficients
-                        factor = Aug.mat[i][k] / Aug.mat[j][k];
-                        factor_is_set = true;
-                    }
-                    else
-                    {
-                        // if the ratio is not the same, not parallel
-                        if (abs(factor - Aug.mat[i][k] / Aug.mat[j][k]) > 1e-9)
-                        {
-                            parallel = false;
-                        }
-                    }
-                }
-            }
-
-            if (!parallel)
-                continue;
-            // If we suspect linear dependence, check if the RHS is the same
-            if (abs(factor * Aug.mat[j][N] - Aug.mat[i][N]) > 1e-9)
-            {
-                // If the RHS is not the same, inconsistent
-                is_inconsistent = true;
-            }
-            else
-            {
-                // If the RHS is the same, multiple solutions
-                has_multiple = true;
-            }
-        }
-    }
-
-    if (is_inconsistent)
-        return 2;
-    if (has_multiple)
-        return 1;
-    return 0;
+    return pair(Ans, FreeVars);
 }
 
 int main()
@@ -239,26 +141,25 @@ int main()
     int n;
     while (cin >> n && n != 0)
     {
-        AugmentedMatrix Aug;
+        vector Aug(n, vector<ld>(n + 1));
         for (int i = 0; i < n; ++i)
         {
             for (int j = 0; j < n; ++j)
             {
-                cin >> Aug.mat[i][j];
+                cin >> Aug[i][j];
             }
         }
         for (int i = 0; i < n; ++i)
         {
-            cin >> Aug.mat[i][n];
+            cin >> Aug[i][n];
         }
-        int flag = checkSystem(n, Aug);
-        if (flag == 2)
+        auto [x, free] = GaussElimination(n, Aug);
+        if (x.empty())
         {
             std::cout << "inconsistent" << endl;
         }
         else
         {
-            auto [x, free] = GaussElimination(n, Aug);
             for (int i = 0; i < n; ++i)
             {
                 if (free[i])
@@ -267,7 +168,7 @@ int main()
                 }
                 else
                 {
-                    std::cout << x.vec[i] << " ";
+                    std::cout << x[i] << " ";
                 }
             }
             std::cout << endl;

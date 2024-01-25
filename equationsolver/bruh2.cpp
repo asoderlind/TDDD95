@@ -120,7 +120,7 @@ int main()
         {
             cin >> a[i][n];
         }
-        auto [x, free] = solve(a);
+        auto [x, free] = solve(a, true);
         if (x.empty())
         {
             cout << "inconsistent" << nl;
