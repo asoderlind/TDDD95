@@ -1,3 +1,15 @@
+/** TDDD95: Lab 1 - fenwick
+ * Author: Axel Söderlind
+ * Date:   2024-01-25
+ * This problem is about implementing a Binary Indexed Tree (BIT),
+ * also known as Fenwick Tree. We use the BIT class to solve this
+ * problem. We initialize the BIT with n elements, each with value 0.
+ * We then iterate through the queries and perform the appropriate
+ * operation for each query.
+ *
+ * Complexity: O(logn) where n is the number of elements and q is the number of queries.
+ * Space: O(n) where n is the number of elements.
+ */
 #include <iostream>
 #include <vector>
 
@@ -37,10 +49,8 @@ struct BIT
 
 int main()
 {
-    // Disable synchronization with C++ I/O streams and C streams for performance
-    ios::sync_with_stdio(false);
-    // Untie cin from cout for performance improvement
-    cin.tie(NULL);
+    ios::sync_with_stdio(false); // Speed up I/O
+    cin.tie(NULL);               // Prevent flushing of cout before cin is done
 
     int N, Q;      // N = Number of elements, Q = Number of queries
     cin >> N >> Q; // Read the number of elements and queries
@@ -68,5 +78,5 @@ int main()
             bit.add(idx, delta); // Update the BIT with the given value at the given index
         }
     }
-    return 0; // End of program
+    return 0;
 }
