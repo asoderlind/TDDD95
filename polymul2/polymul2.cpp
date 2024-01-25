@@ -1,3 +1,17 @@
+/** TDDD95: Lab 1 - polymul2
+ * Author: Axel Söderlind
+ * Date:   2024-01-25
+ * This problem is about multiplying two polynomials. We use the
+ * Fast Fourier Transform to solve this problem. We first pad the
+ * polynomials with zeroes to make their size a power of two. We
+ * then convert the polynomials to complex numbers and perform
+ * the FFT. We then multiply the resulting polynomials and perform
+ * the inverse FFT to get the resulting polynomial.
+ *
+ * Complexity: O(nlogn) where n is the number of coefficients in the polynomials.
+ * Space: O(n) where n is the number of coefficients in the polynomials.
+ *
+ */
 #include <iostream>
 #include <complex>
 #include <vector>
@@ -78,7 +92,6 @@ vector<int> multiply(vector<cd> &fa, vector<cd> &fb)
     return result;
 }
 
-// Driver code
 int main()
 {
     // Disable synchronization with C++ I/O streams and C streams for performance
