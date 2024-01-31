@@ -18,54 +18,66 @@ constexpr ll INFLL = 0x3f3f3f3f3f3f3f3f;
 constexpr ll MOD = 998244353;
 constexpr ld EPS = 1e-9L;
 
+long countZerosUpTo(long n, bool verbose = false)
+{
+    long zeros = 0;
+    long digit, sliceLeft, sliceRight;
 
-long countZerosUpTo(long n, bool verbose = false) {
-        long zeros = 0;
-        long digit, sliceLeft, sliceRight;
-        
-        if (verbose) {
-            printf("n: %ld\n", n);
+    if (verbose)
+    {
+        printf("n: %ld\n", n);
+    }
+
+    for (int i = 1;; i *= 10)
+    {
+
+        // Slice number and get middle digit
+        digit = n / i;
+        sliceRight = n % i;
+        sliceLeft = digit / 10;
+        digit = digit % 10;
+
+        if (verbose)
+        {
+            printf("digit: %ld, sliceLeft: %ld, sliceRight: %ld\n", digit, sliceLeft, sliceRight);
         }
 
-        for (int i = 1; ; i *= 10) {
-
-            // Slice number and get middle digit
-            digit = n / i;
-            sliceRight = n % i;
-            sliceLeft = digit / 10;
-            digit = digit % 10;
-
-            if (verbose) {
-                printf("digit: %ld, sliceLeft: %ld, sliceRight: %ld\n", digit, sliceLeft, sliceRight);
+        // Whole number processed
+        if (sliceLeft == 0)
+        {
+            if (verbose)
+            {
+                printf("reached end of number\n");
             }
-
-            // Whole number processed
-            if (sliceLeft == 0) {
-                if (verbose) {
-                    printf("reached end of number\n");
-                }
-                return zeros;
-            }
-
-            // Special case for digit zero
-            if (verbose) {
-                printf("zeros before: %ld\n", zeros);
-            }
-            if (digit == 0) {
-                if (verbose) {
-                    printf("zeros += %ld\n", (sliceLeft - 1) * i + sliceRight + 1);
-                }
-                zeros += (sliceLeft - 1) * i + sliceRight + 1;
-            } else {
-                if (verbose) {
-                    printf("zeros += %ld\n", sliceLeft * i);
-                }
-                zeros += sliceLeft * i;
-            }
-            if (verbose) {
-                printf("zeros after: %ld\n", zeros);
-            }
+            return zeros;
         }
+
+        // Special case for digit zero
+        if (verbose)
+        {
+            printf("zeros before: %ld\n", zeros);
+        }
+        if (digit == 0)
+        {
+            if (verbose)
+            {
+                printf("zeros += %ld\n", (sliceLeft - 1) * i + sliceRight + 1);
+            }
+            zeros += (sliceLeft - 1) * i + sliceRight + 1;
+        }
+        else
+        {
+            if (verbose)
+            {
+                printf("zeros += %ld\n", sliceLeft * i);
+            }
+            zeros += sliceLeft * i;
+        }
+        if (verbose)
+        {
+            printf("zeros after: %ld\n", zeros);
+        }
+    }
 }
 
 long countZeros(long n)
@@ -95,10 +107,11 @@ int main()
     {
         if (m < 0)
             break;
-        else {
+        else
+        {
             long zeros = countZeros(m);
-            long lower = countZerosUpTo(m, true);
-            long upper = countZerosUpTo(n, true);
+            long lower = countZerosUpTo(m);
+            long upper = countZerosUpTo(n);
             cout << zeros + upper - lower << nl;
         }
     }
