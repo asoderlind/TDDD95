@@ -18,6 +18,71 @@ using namespace std;
 typedef pair<int, int> pii; // Pair of (distance, node)
 constexpr char nl = '\n';
 
+struct Graph
+{
+    vector<vector<pii>> adj;
+    int nNodes{0};
+    int nEdges{0};
+    int nQueries{0};
+};
+
+pair<vector<int>, vector<int>> shortestPathDistances(Graph G, int startNode)
+{
+    // dist holds the shortest distance from the start node to every other node. Initialized to INT_MAX.
+    vector<int> dist(G.nNodes, INT_MAX);
+
+    // Reading the edges and their weights into the adjacency list.
+    for (int i = 0; i < G.nEdges; i++)
+    {
+        int fromNode, toNode, weight;
+        cin >> fromNode >> toNode >> weight;
+        // Creating a directed edge from fromNode to toNode with the given weight.
+        G.adj[fromNode].push_back({weight, toNode});
+    }
+
+    // Dijkstra's Algorithm implementation starts here.
+    // Priority queue to efficiently fetch the next node to process based on the shortest distance.
+    priority_queue<pii, vector<pii>, greater<pii>> pq;
+    // Distance to the start node is 0.
+    dist[startNode] = 0;
+    // Add the start node to the priority queue.
+    pq.push({0, startNode});
+
+    // Process nodes until there are no more nodes in the queue.
+    while (!pq.empty())
+    {
+        // Get the node with the shortest distance from the queue.
+        int currentDist = pq.top().first;
+        int currentNode = pq.top().second;
+        pq.pop();
+
+        // cout << "Current node: " << currentNode << " with distance: " << currentDist << nl;
+        // cout << "Current distance: " << currentDist << nl;
+
+        // cout << "if " << currentDist << " > " << G.dist[currentNode] << nl;
+        // Skip if a shorter path to this node has already been found.
+        if (currentDist > dist[currentNode])
+            continue;
+
+        // Check all adjacent nodes.
+        for (auto edge : G.adj[currentNode])
+        {
+            int nextNode = edge.second;
+            int nextDist = edge.first;
+
+            // Update the distance to the adjacent node if a shorter path is found.
+            if (dist[currentNode] + nextDist < dist[nextNode])
+            {
+                dist[nextNode] = dist[currentNode] + nextDist;
+                // Add the updated node to the priority queue.
+                pq.push({dist[nextNode], nextNode});
+            }
+        }
+    }
+
+    return {dist, dist};
+}
+
 int main()
 {
     ios::sync_with_stdio(false); // Speeds up input/output operations.
@@ -35,64 +100,20 @@ int main()
 
         // adj is an adjacency list, where each node has a list of its neighbors and the weight of the edge to them.
         vector<vector<pii>> adj(nNodes);
-        // dist holds the shortest distance from the start node to every other node. Initialized to INT_MAX.
-        vector<int> dist(nNodes, INT_MAX);
 
-        // Reading the edges and their weights into the adjacency list.
-        for (int i = 0; i < nEdges; i++)
-        {
-            int fromNode, toNode, weight;
-            cin >> fromNode >> toNode >> weight;
-            // Creating a directed edge from fromNode to toNode with the given weight.
-            adj[fromNode].push_back({weight, toNode});
-        }
+        Graph G = {adj, nNodes, nEdges, nQueries};
 
-        // Dijkstra's Algorithm implementation starts here.
-        // Priority queue to efficiently fetch the next node to process based on the shortest distance.
-        priority_queue<pii, vector<pii>, greater<pii>> pq;
-        // Distance to the start node is 0.
-        dist[startNode] = 0;
-        // Add the start node to the priority queue.
-        pq.push({0, startNode});
-
-        // Process nodes until there are no more nodes in the queue.
-        while (!pq.empty())
-        {
-            // Get the node with the shortest distance from the queue.
-            int currentDist = pq.top().first;
-            int currentNode = pq.top().second;
-            pq.pop();
-
-            // Skip if a shorter path to this node has already been found.
-            if (currentDist > dist[currentNode])
-                continue;
-
-            // Check all adjacent nodes.
-            for (auto edge : adj[currentNode])
-            {
-                int nextNode = edge.second;
-                int nextDist = edge.first;
-
-                // Update the distance to the adjacent node if a shorter path is found.
-                if (dist[currentNode] + nextDist < dist[nextNode])
-                {
-                    dist[nextNode] = dist[currentNode] + nextDist;
-                    // Add the updated node to the priority queue.
-                    pq.push({dist[nextNode], nextNode});
-                }
-            }
-        }
-
+        vector<int> outDist = shortestPathDistances(G, startNode).first;
         // Handling the queries - output the shortest distance to each requested node.
-        for (int i = 0; i < nQueries; i++)
+        for (int i = 0; i < G.nQueries; i++)
         {
             int queryNode;
             cin >> queryNode;
             // If the distance is INT_MAX, the node is unreachable.
-            if (dist[queryNode] == INT_MAX)
+            if (outDist[queryNode] == INT_MAX)
                 cout << "Impossible" << nl;
             else
-                cout << dist[queryNode] << nl; // Output the shortest distance.
+                cout << outDist[queryNode] << nl; // Output the shortest distance.
         }
 
         cout << nl; // New line for readability between test cases.
