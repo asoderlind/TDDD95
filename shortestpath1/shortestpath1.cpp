@@ -1,6 +1,6 @@
 /** TDDD95: Lab 2 - shortestpath1
  * Author: Axel Söderlind
- * Date:   2024-01-31
+ * Date:   2024-02-08
  * This problem is about finding the shortest path
  * between two nodes in a graph (if possible)
  * and then returning that distance. To solve it
@@ -20,13 +20,13 @@ constexpr char nl = '\n';
 
 struct Graph
 {
-    vector<vector<pii>> adj;
+    vector<vector<pii>> adj; // Adjacency list.
     int nNodes{0};
     int nEdges{0};
     int nQueries{0};
 };
 
-pair<vector<int>, vector<int>> shortestPathDistances(Graph G, int startNode)
+pair<vector<int>, vector<int>> shortestPath(Graph G, int startNode)
 {
     // dist holds the shortest distance from the start node to every other node. Initialized to INT_MAX.
     vector<int> dist(G.nNodes, INT_MAX);
@@ -102,8 +102,9 @@ int main()
 
         Graph G = {adj, nNodes, nEdges, nQueries};
 
-        vector<int> outDist = shortestPathDistances(G, startNode).first;
+        vector<int> outDist = shortestPath(G, startNode).first;
         // vector<int> outParents = shortestPathDistances(G, startNode).second;
+
         // Handling the queries - output the shortest distance to each requested node.
         for (int i = 0; i < G.nQueries; i++)
         {
