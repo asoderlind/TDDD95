@@ -31,6 +31,9 @@ pair<vector<int>, vector<int>> shortestPathDistances(Graph G, int startNode)
     // dist holds the shortest distance from the start node to every other node. Initialized to INT_MAX.
     vector<int> dist(G.nNodes, INT_MAX);
 
+    // parents holds the parent node of each node in the shortest path from the start node.
+    vector<int> parents(G.nNodes, -1);
+
     // Reading the edges and their weights into the adjacency list.
     for (int i = 0; i < G.nEdges; i++)
     {
@@ -40,7 +43,6 @@ pair<vector<int>, vector<int>> shortestPathDistances(Graph G, int startNode)
         G.adj[fromNode].push_back({weight, toNode});
     }
 
-    // Dijkstra's Algorithm implementation starts here.
     // Priority queue to efficiently fetch the next node to process based on the shortest distance.
     priority_queue<pii, vector<pii>, greater<pii>> pq;
     // Distance to the start node is 0.
@@ -56,10 +58,6 @@ pair<vector<int>, vector<int>> shortestPathDistances(Graph G, int startNode)
         int currentNode = pq.top().second;
         pq.pop();
 
-        // cout << "Current node: " << currentNode << " with distance: " << currentDist << nl;
-        // cout << "Current distance: " << currentDist << nl;
-
-        // cout << "if " << currentDist << " > " << G.dist[currentNode] << nl;
         // Skip if a shorter path to this node has already been found.
         if (currentDist > dist[currentNode])
             continue;
@@ -74,13 +72,14 @@ pair<vector<int>, vector<int>> shortestPathDistances(Graph G, int startNode)
             if (dist[currentNode] + nextDist < dist[nextNode])
             {
                 dist[nextNode] = dist[currentNode] + nextDist;
+                parents[nextNode] = currentNode; // Update the parent of the adjacent node.
                 // Add the updated node to the priority queue.
                 pq.push({dist[nextNode], nextNode});
             }
         }
     }
 
-    return {dist, dist};
+    return {dist, parents};
 }
 
 int main()
@@ -104,6 +103,7 @@ int main()
         Graph G = {adj, nNodes, nEdges, nQueries};
 
         vector<int> outDist = shortestPathDistances(G, startNode).first;
+        // vector<int> outParents = shortestPathDistances(G, startNode).second;
         // Handling the queries - output the shortest distance to each requested node.
         for (int i = 0; i < G.nQueries; i++)
         {
