@@ -1,7 +1,13 @@
 /** TDDD95: Lab 2 - shortestpath3
  * Author: Axel Söderlind
  * Date:   2024-02-09
- * This problem is about finding
+ * This problem is about finding the shortest path
+ * between two nodes in a graph (if possible) where
+ * the graph may contain negative cycles. To solve it
+ * we use the Bellman-Ford algorithm.
+ *
+ * Time complexity: O(n{nodes}*n{edges})
+ * Space: O(n{Nodes} + n{Edges})
  */
 #include <iostream>
 #include <vector>
@@ -20,10 +26,10 @@ struct Edge
 
 struct Graph
 {
-    vector<vector<Edge>> adj; // Adjacency list
-    int nNodes{0};
-    int nEdges{0};
-    int nQueries{0};
+    vector<vector<Edge>> adjList; // Adjacency list
+    int numNodes{0};
+    int numEdges{0};
+    int numQueries{0};
 };
 
 // Recursive function to mark all nodes reachable from
@@ -31,7 +37,7 @@ struct Graph
 void markReachableNodes(Graph &G, int start, vector<bool> &inNegativeCycle)
 {
     inNegativeCycle[start] = true;
-    for (Edge edge : G.adj[start])
+    for (Edge edge : G.adjList[start])
     {
         if (!inNegativeCycle[edge.dest])
         {
@@ -41,48 +47,45 @@ void markReachableNodes(Graph &G, int start, vector<bool> &inNegativeCycle)
 }
 
 // Bellman-Ford algorithm to find shortest paths and detect negative cycles
-pair<vector<int>, vector<bool>> BellmanFord(Graph &G, int startNode)
+pair<vector<int>, vector<bool>> BellmanFord(Graph &graph, int startNode)
 {
-    vector<int> dist(G.nNodes, INT_MAX);
-    vector<int> parents(G.nNodes, -1);
-    vector<bool> inNegativeCycle(G.nNodes, false);
+    vector<int> distances(graph.numNodes, INT_MAX);         // Shortest distances from startNode to all other nodes
+    vector<int> predecessors(graph.numNodes, -1);           // Predecessors of each node in the path
+    vector<bool> affectedByNegCycle(graph.numNodes, false); // Flags to indicate if a node is affected by a negative cycle
 
-    dist[startNode] = 0;
+    distances[startNode] = 0; // Distance from startNode to itself is 0
 
-    // Step 2: Relax all edges |nNodes| - 1 times
-    for (int i = 1; i <= G.nNodes - 1; i++)
+    // Relax all edges |V| - 1 times (V is the number of vertices in the graph)
+    for (int i = 1; i <= graph.numNodes - 1; i++)
     {
-        for (int j = 0; j < G.nNodes; j++)
+        for (int currentNode = 0; currentNode < graph.numNodes; currentNode++)
         {
-            int currentNode = j;
-            for (Edge edge : G.adj[currentNode])
+            for (const Edge &edge : graph.adjList[currentNode])
             {
                 int v = edge.dest;
                 int weight = edge.weight;
-                if (dist[currentNode] != INT_MAX && dist[currentNode] + weight < dist[v])
+                if (distances[currentNode] != INT_MAX && distances[currentNode] + weight < distances[v])
                 {
-                    dist[v] = dist[currentNode] + weight;
-                    parents[v] = currentNode;
+                    distances[v] = distances[currentNode] + weight;
+                    predecessors[v] = currentNode;
                 }
             }
         }
     }
 
-    // Step 3: check for negative-weight cycles
-    for (int j = 0; j < G.nNodes; j++)
+    // Check for negative-weight cycles
+    for (int currentNode = 0; currentNode < graph.numNodes; currentNode++)
     {
-        int currentNode = j;
-        for (Edge edge : G.adj[currentNode])
+        for (const Edge &edge : graph.adjList[currentNode])
         {
-            int weight = edge.weight;
-            if (dist[currentNode] != INT_MAX && dist[currentNode] + weight < dist[edge.dest])
+            if (distances[currentNode] != INT_MAX && distances[currentNode] + edge.weight < distances[edge.dest])
             {
-                markReachableNodes(G, edge.dest, inNegativeCycle);
+                markReachableNodes(graph, edge.dest, affectedByNegCycle);
             }
         }
     }
 
-    return {dist, inNegativeCycle};
+    return {distances, affectedByNegCycle};
 }
 
 int main()
@@ -110,12 +113,12 @@ int main()
 
         // Step 1: Initialize distances from start to all other vertices as INT_MAX
         // Reading the edges and their weights into the adjacency list.
-        for (int i = 0; i < G.nEdges; i++)
+        for (int i = 0; i < G.numEdges; i++)
         {
             int src, dest, weight;
             cin >> src >> dest >> weight;
             // Creating a directed edge from fromNode to toNode with the given weight.
-            G.adj[src].push_back({dest, weight});
+            G.adjList[src].push_back({dest, weight});
 
             if (DEBUG)
             {
@@ -130,7 +133,7 @@ int main()
         vector<bool> inNegativeCycle = result.second;
 
         // Handling the queries - output the shortest distance to each requested node.
-        for (int i = 0; i < G.nQueries; i++)
+        for (int i = 0; i < G.numQueries; i++)
         {
             int queryNode;
             cin >> queryNode;
