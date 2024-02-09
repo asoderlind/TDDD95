@@ -107,18 +107,15 @@ int main()
         if (DEBUG)
             cout << "nNodes: " << nNodes << " nEdges: " << nEdges << " nQueries: " << nQueries << " startNode: " << startNode << nl;
 
-        vector<vector<Edge>> adj(nNodes);
+        vector<vector<Edge>> adjList(nNodes);
+        Graph graph = {adjList, nNodes, nEdges, nQueries};
 
-        Graph G = {adj, nNodes, nEdges, nQueries};
-
-        // Step 1: Initialize distances from start to all other vertices as INT_MAX
-        // Reading the edges and their weights into the adjacency list.
-        for (int i = 0; i < G.numEdges; i++)
+        for (int i = 0; i < graph.numEdges; i++)
         {
             int src, dest, weight;
             cin >> src >> dest >> weight;
             // Creating a directed edge from fromNode to toNode with the given weight.
-            G.adjList[src].push_back({dest, weight});
+            graph.adjList[src].push_back({dest, weight});
 
             if (DEBUG)
             {
@@ -126,14 +123,12 @@ int main()
             }
         }
 
-        // adj is an adjacency list, where each node has a list of its neighbors and the weight of the edge to them.
-
-        pair<vector<int>, vector<bool>> result = BellmanFord(G, startNode);
+        pair<vector<int>, vector<bool>> result = BellmanFord(graph, startNode);
         vector<int> outDist = result.first;
         vector<bool> inNegativeCycle = result.second;
 
         // Handling the queries - output the shortest distance to each requested node.
-        for (int i = 0; i < G.numQueries; i++)
+        for (int i = 0; i < graph.numQueries; i++)
         {
             int queryNode;
             cin >> queryNode;
