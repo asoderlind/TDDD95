@@ -162,6 +162,10 @@ int main()
 
         vector<int> outDist = shortestPath(G, startNode).first;
 
+        Graph G = {adj, nNodes, nEdges, nQueries};
+
+        vector<int> outDist = shortestPath(G, startNode).first;
+
         // Handling the queries - output the shortest times to each requested node.
         for (int i = 0; i < G.nQueries; i++)
         {
