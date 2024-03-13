@@ -7,8 +7,24 @@
  * We then iterate through the queries and perform the appropriate
  * operation for each query.
  *
- * Complexity: O(logn) where n is the number of elements and q is the number of queries.
- * Space: O(n) where n is the number of elements.
+ * A Binary Indexed Tree (BIT) is an efficient data structure for calculating
+ * prefix sums and updating values in a mutable array of numbers. Unlike a naive approach
+ * that requires O(N) time complexity for each query or update operation, BIT improves
+ * this to O(logN) for both operations.
+ *
+ * The key idea behind BIT is that it represents the array in a tree-like structure,
+ * where each node corresponds to a cumulative sum of a range of elements in the original array.
+ * This structure allows it to perform both update and query operations in logarithmic time
+ * by exploiting the binary representation of indices. Each element in the BIT is responsible
+ * for storing the sum of a certain range of elements in the original array. The size of these ranges
+ * is determined by the last set bit in their index.
+ *
+ * The BIT essentially reduces the problem of calculating prefix sums and updating elements to a series of smaller,
+ * more manageable operations that can be performed quickly by leveraging the binary structure of the indices.
+ * This results in significant performance improvements, especially for large arrays where the naive approach becomes slow.
+ *
+ * Complexity: O(logN) where N is the number of elements.
+ * Space: O(N) where N is the number of elements.
  */
 #include <iostream>
 #include <vector>
