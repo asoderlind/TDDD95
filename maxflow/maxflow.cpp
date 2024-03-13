@@ -1,12 +1,20 @@
-/** TDDD95: Lab X - <name>
+/** TDDD95: Lab 2 - maxflow
  * Author: Axel Söderlind
- * Date:   2024-01-22
- * This problem is about ...
+ * Date:   2024-03-13
+ * This problem is about finding the maximum flow in a graph.
+ * To solve it we use the Ford-Fulkerson algorithm. We start by
+ * reading the input and then we create a graph and run the
+ * algorithm. We then print the result.
+ *
+ * Time complexity: O(n{vertices} * n{edges}^2)
+ * Space: O(n{vertices})
  */
 #include <iostream>
 #include <vector>
 #include <algorithm>
 #include <queue>
+#include <climits>
+#include <map>
 
 using namespace std;
 
@@ -28,132 +36,136 @@ constexpr ld EPS = 1e-9L;
 struct graph
 {
     int numNodes;
-    int numEdges;
-    vector<vector<int>> capacity;
-    vector<vector<int>> residual;
+    vector<vector<int>> adj;         // Adjacency matrix
+    vector<vector<int>> capacity;    // Capacity matrix
+    vector<vector<int>> flow;        // Flow matrix
+    vector<vector<bool>> directions; // Edge directions matrix
 };
+
+struct flow
+{
+    int node;
+    int flow;
+};
+
+graph initGraph(int n)
+{
+    graph G;
+    G.numNodes = n;
+    G.adj.resize(n, vector<int>());
+    G.capacity.resize(n, vector<int>(n, 0));
+    G.flow.resize(n, vector<int>(n, 0));
+    G.directions.resize(n, vector<bool>(n, false));
+    return G;
+}
 
 /// @brief Find a path from s to t in the graph using BFS.
 /// @param G The graph to search in.
-/// @param s The source node.
-/// @param t The sink node.
-/// @param parent
+/// @param source The source node.
+/// @param sink The sink node.
+/// @param parent The parent vector to store the path.
 /// @return
-bool bfs(graph &G, int s, int t, int parent[])
+int bfs(graph G, int source, int sink, vector<int> &parent)
 {
-    // Create a visited array and mark all vertices as not
-    // visited
-    bool visited[G.numNodes];
-    memset(visited, 0, sizeof(visited));
+    fill(parent.begin(), parent.end(), -1);
+    parent[source] = -2; // Mark the source node as visited
+    queue<flow> q;       // Queue to hold the nodes to visit
+    q.push({source, INT_MAX});
 
-    // Create a queue, enqueue source vertex and mark source
-    // vertex as visited
-    queue<int> q;
-    q.push(s);
-    visited[s] = true;
-    parent[s] = -1;
-
-    // Standard BFS Loop
-    while (!q.empty())
+    while (!q.empty()) // Standard BFS loop
     {
-        int u = q.front();
+        int currentNode = q.front().node;
+        int flow = q.front().flow;
         q.pop();
 
-        for (int v = 0; v < G.numNodes; v++)
+        for (int nextNode : G.adj[currentNode])
         {
-            if (visited[v] == false && G.residual[u][v] > 0)
+            if (parent[nextNode] == -1 && G.capacity[currentNode][nextNode] > 0)
             {
-                // If we find a connection to the sink node,
-                // then there is no point in BFS anymore we
-                // just have to set its parent and can return
-                // true
-                if (v == t)
-                {
-                    parent[v] = u;
-                    return true;
-                }
-                q.push(v);
-                parent[v] = u;
-                visited[v] = true;
+                parent[nextNode] = currentNode;
+                // We send the minimum flow we have seen so far up to this node
+                int new_flow = min(flow, G.capacity[currentNode][nextNode]);
+                if (nextNode == sink)
+                    return new_flow;
+                q.push({nextNode, new_flow});
             }
         }
     }
 
-    // We didn't reach sink in BFS starting from source, so
-    // return false
-    return false;
-}
-
-void printGraph(graph G)
-{
-    cout << "Capacity matrix: \n";
-    rep(i, 0, G.capacity.size())
-    {
-        rep(j, 0, G.capacity[i].size())
-        {
-            cout << G.capacity[i][j] << "\t";
-        }
-        cout << nl;
-    }
-    cout << "Residual matrix: \n";
-    rep(i, 0, G.residual.size())
-    {
-        rep(j, 0, G.residual[i].size())
-        {
-            cout << G.residual[i][j] << "\t";
-        }
-        cout << nl;
-    }
+    return 0;
 }
 
 /// @brief Implement the Ford-Fulkerson algorithm to find the maximum flow in a graph.
 /// @param G The graph to find the maximum flow in.
-/// @param s The source node.
-/// @param t The sink node.
-/// @return A graph representing the flow network.
-int fordFulkerson(graph &G, int s, int t)
+/// @param source The source node.
+/// @param sink The sink node.
+/// @return A graph representing the flow network and the maximum flow.
+pair<graph, int> fordFulkerson(graph &G, int source, int sink)
 {
-    int u, v;
+    vector<int> parent(G.numNodes); // This array is filled by BFS and to store path
 
-    // Create a residual graph and fill the residual graph
-    // with given capacities in the original graph as
-    // residual capacities in residual graph
-    rep(u, 0, G.numNodes) rep(v, 0, G.numNodes) G.residual[u][v] = G.capacity[u][v];
+    int maxFlow = 0; // There is no flow to the sink initially
+    int newFlow;     // placeholder for the new flow
 
-    int parent[G.numNodes]; // This array is filled by BFS and to
-                            // store path
-
-    int max_flow = 0; // There is no flow initially
-
-    // Augment the flow while there is path from source to
-    // sink
-    while (bfs(G, s, t, parent))
+    // Augment the flow while there is path from source to sink
+    while ((newFlow = bfs(G, source, sink, parent)))
     {
-        // Find minimum residual capacity of the edges along
-        // the path filled by BFS. Or we can say find the
-        // maximum flow through the path found.
-        int path_flow = INT_MAX;
-        for (v = t; v != s; v = parent[v])
+        maxFlow += newFlow; // add minimum flow to max_flow
+        int current = sink;
+        while (current != source) // update capacities along the path
         {
-            u = parent[v];
-            path_flow = min(path_flow, G.residual[u][v]);
+            int previous = parent[current];
+            G.flow[previous][current] += newFlow;
+            G.flow[current][previous] -= newFlow;
+            G.capacity[previous][current] -= newFlow;
+            G.capacity[current][previous] += newFlow;
+            current = previous;
         }
-
-        // update residual capacities of the edges and
-        // reverse edges along the path
-        for (v = t; v != s; v = parent[v])
-        {
-            u = parent[v];
-            G.residual[u][v] -= path_flow;
-            G.residual[v][u] += path_flow;
-        }
-
-        // Add path flow to overall flow
-        max_flow += path_flow;
     }
 
-    // Return the overall flow
-    return max_flow;
+    if (DEBUG)
+    {
+        std::cout << "Flow matrix:" << nl;
+        for (int i = 0; i < G.numNodes; i++)
+        {
+            for (int j = 0; j < G.numNodes; j++)
+            {
+                std::cout << G.flow[i][j] << " ";
+            }
+            std::cout << nl;
+        }
+    }
+
+    // Return updated graph and max flow
+    return {G, maxFlow};
+}
+
+/// @brief  Print the edges in the solution graph.
+/// @param G The graph to print the edges from.
+void printSolutionEdges(graph G)
+{
+    map<pair<int, int>, int> edges;
+    for (int i = 0; i < (int)G.adj.size(); i++)
+    {
+        for (int j = 0; j < (int)G.adj[i].size(); j++)
+        {
+            int nextNode = G.adj[i][j];
+            if (G.flow[i][nextNode] > 0 && G.directions[i][nextNode])
+            {
+                edges[{i, nextNode}] = G.flow[i][nextNode];
+            }
+        }
+    }
+    cout << edges.size() << nl; // Print the number of edges
+
+    // Print the edges
+    for (auto edge = edges.begin(); edge != edges.end(); edge++)
+    {
+        int from = edge->first.first;
+        int to = edge->first.second;
+        int flow = edge->second;
+        cout << from << " " << to << " " << flow << nl;
+    }
 }
 
 int main()
@@ -166,28 +178,24 @@ int main()
         std::cout << "Debugging" << nl;
 
     // read input
-    int n, m, s, t;
-    cin >> n >> m >> s >> t;
-    std::cout << n << " " << m << " " << s << " " << t << nl;
+    int n, m, source, sink;
+    cin >> n >> m >> source >> sink;
 
-    graph G;
-    G.numNodes = n;
-    G.numEdges = m;
-    G.capacity.resize(n, vector<int>(n, 0));
-    G.residual.resize(n, vector<int>(n, 0));
+    graph G = initGraph(n);
 
     rep(i, 0, m)
     {
         int a, b, c; // from, to, capacity
         cin >> a >> b >> c;
-        G.capacity[a][b] = c;
+        G.directions[a][b] = true;
+        G.adj[a].push_back(b);
+        G.adj[b].push_back(a);
+        G.capacity[a][b] += c;
     }
-    int flow_graph = fordFulkerson(G, s, t);
 
-    if (DEBUG)
-        printGraph(G);
-
-    std::cout << "Max flow: " << flow_graph << nl;
+    auto [newG, maxFlow] = fordFulkerson(G, source, sink);
+    cout << n << " " << maxFlow << " ";
+    printSolutionEdges(newG);
 
     return 0;
 }
