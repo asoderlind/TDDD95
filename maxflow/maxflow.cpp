@@ -15,7 +15,7 @@ typedef long double ld;
 
 #define rep(i, a, b) for (int i = a; i < b; ++i)
 
-bool DEBUG = true;
+bool DEBUG = false;
 
 constexpr char nl = '\n';
 constexpr ll INF = 0x3f3f3f3f;
@@ -183,7 +183,10 @@ int main()
         G.capacity[a][b] = c;
     }
     int flow_graph = fordFulkerson(G, s, t);
-    printGraph(G);
+
+    if (DEBUG)
+        printGraph(G);
+
     std::cout << "Max flow: " << flow_graph << nl;
 
     return 0;
