@@ -18,6 +18,8 @@ using namespace std;
 typedef pair<int, int> pii; // Pair of (distance, node)
 constexpr char nl = '\n';
 
+bool showPath = false;
+
 struct Graph
 {
     vector<vector<pii>> adj; // Adjacency list.
@@ -82,6 +84,17 @@ pair<vector<int>, vector<int>> shortestPath(Graph G, int startNode)
     return {dist, parents};
 }
 
+void constructPath(vector<int> parents, int node)
+{
+    if (parents[node] == -1)
+    {
+        cout << node;
+        return;
+    }
+    constructPath(parents, parents[node]);
+    cout << " " << node;
+}
+
 int main()
 {
     ios::sync_with_stdio(false); // Speeds up input/output operations.
@@ -102,8 +115,7 @@ int main()
 
         Graph G = {adj, nNodes, nEdges, nQueries};
 
-        vector<int> outDist = shortestPath(G, startNode).first;
-        // vector<int> outParents = shortestPathDistances(G, startNode).second;
+        auto [outDist, outParents] = shortestPath(G, startNode);
 
         // Handling the queries - output the shortest distance to each requested node.
         for (int i = 0; i < G.nQueries; i++)
@@ -114,7 +126,15 @@ int main()
             if (outDist[queryNode] == INT_MAX)
                 cout << "Impossible" << nl;
             else
+            {
                 cout << outDist[queryNode] << nl; // Output the shortest distance.
+                if (showPath)
+                {
+                    cout << "Path: ";
+                    constructPath(outParents, queryNode);
+                    cout << nl << nl;
+                }
+            }
         }
 
         cout << nl; // New line for readability between test cases.
