@@ -6,7 +6,7 @@
  * reading the input and then we create a graph and run the
  * algorithm. We then print the result.
  *
- * Time complexity: O(n{vertices} * n{edges}^2)
+ * Time complexity: O(max_flow * n{edges})
  * Space: O(n{vertices})
  */
 #include <iostream>
@@ -42,12 +42,6 @@ struct graph
     vector<vector<bool>> directions; // Edge directions matrix
 };
 
-struct flow
-{
-    int node;
-    int flow;
-};
-
 graph initGraph(int n)
 {
     graph G;
@@ -65,17 +59,17 @@ graph initGraph(int n)
 /// @param sink The sink node.
 /// @param parent The parent vector to store the path.
 /// @return
-int bfs(graph G, int source, int sink, vector<int> &parent)
+int bfs(graph &G, int source, int sink, vector<int> &parent)
 {
     fill(parent.begin(), parent.end(), -1);
-    parent[source] = -2; // Mark the source node as visited
-    queue<flow> q;       // Queue to hold the nodes to visit
+    parent[source] = -2;     // Mark the source node as visited
+    queue<pair<int, int>> q; // Queue to hold the nodes to visit
     q.push({source, INT_MAX});
 
     while (!q.empty()) // Standard BFS loop
     {
-        int currentNode = q.front().node;
-        int flow = q.front().flow;
+        int currentNode = q.front().first;
+        int currentFlow = q.front().second;
         q.pop();
 
         for (int nextNode : G.adj[currentNode])
@@ -84,10 +78,10 @@ int bfs(graph G, int source, int sink, vector<int> &parent)
             {
                 parent[nextNode] = currentNode;
                 // We send the minimum flow we have seen so far up to this node
-                int new_flow = min(flow, G.capacity[currentNode][nextNode]);
+                int newFlow = min(currentFlow, G.capacity[currentNode][nextNode]);
                 if (nextNode == sink)
-                    return new_flow;
-                q.push({nextNode, new_flow});
+                    return newFlow;
+                q.push({nextNode, newFlow});
             }
         }
     }
@@ -178,23 +172,23 @@ int main()
         std::cout << "Debugging" << nl;
 
     // read input
-    int n, m, source, sink;
-    cin >> n >> m >> source >> sink;
+    int numNodes, numEdges, source, sink;
+    cin >> numNodes >> numEdges >> source >> sink;
 
-    graph G = initGraph(n);
+    graph G = initGraph(numNodes);
 
-    rep(i, 0, m)
+    rep(i, 0, numEdges)
     {
-        int a, b, c; // from, to, capacity
-        cin >> a >> b >> c;
-        G.directions[a][b] = true;
-        G.adj[a].push_back(b);
-        G.adj[b].push_back(a);
-        G.capacity[a][b] += c;
+        int from, to, capacity; // from, to, capacity
+        cin >> from >> to >> capacity;
+        G.directions[from][to] = true;
+        G.adj[from].push_back(to);
+        G.adj[to].push_back(from);
+        G.capacity[from][to] += capacity;
     }
 
     auto [newG, maxFlow] = fordFulkerson(G, source, sink);
-    cout << n << " " << maxFlow << " ";
+    cout << numNodes << " " << maxFlow << " ";
     printSolutionEdges(newG);
 
     return 0;
