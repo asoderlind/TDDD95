@@ -1,10 +1,15 @@
-/** TDDD95: Lab 3.1 - String Matching
+/** TDDD95: Lab 3.1 - stringmatching
  * Author: Axel Söderlind
  * Date:   2024-03-20
  * This program demonstrates the Knuth-Morris-Pratt (KMP) algorithm for string matching.
  * It reads pairs of strings from standard input, where the first string in each pair is
  * the pattern and the second is the text to search within. For each pair, the program outputs
- * the starting indexes of all occurrences of the pattern within the text.
+ * the starting indexes of all occurrences of the pattern within the text. The purpose of computing
+ * the LPS array is to facilitate the KMP algorithm's ability to skip over portions of the text
+ * where a match is not possible
+ *
+ * Time complexity: O(n + m) where n is the length of the text and m is the length of the pattern.
+ * Space complexity: O(m) where m is the length of the pattern.
  */
 
 #include <iostream>
@@ -29,31 +34,35 @@ constexpr ld EPS = 1e-9L;
 /// @brief Computes the longest proper prefix that is also a suffix (LPS) array for the KMP algorithm
 /// @param p The pattern string
 /// @param m The length of the pattern
-/// @param pi Reference to an integer vector where the LPS array will be stored
-void computePi(string p, int m, vector<int> &pi)
+/// @param lps Reference to an integer vector where the LPS array will be stored
+void computeLps(string pattern, int patternLen, vector<int> &lps)
 {
     int len = 0; // Length of the previous longest prefix suffix
-    pi[0] = 0;   // LPS[0] is always 0
+    lps[0] = 0;  // lps[0] is always 0
 
-    // Calculate pi[i] for i = 1 to m-1
+    // Calculate lps[i] for i = 1 to m-1
     int i = 1;
-    while (i < m)
+    while (i < patternLen)
     {
-        if (p[i] == p[len])
+        if (pattern[i] == pattern[len])
         {
+            // If the characters match, increment the length and store it in the LPS array
             len++;
-            pi[i] = len;
+            lps[i] = len;
             i++;
         }
         else
         {
+            // If the characters do not match
             if (len != 0)
             {
-                len = pi[len - 1];
+                // Move len to the index of the previous longest prefix suffix
+                len = lps[len - 1];
             }
             else
             {
-                pi[i] = 0;
+                // If len is 0, set lps[i] to 0 and increment i
+                lps[i] = 0;
                 i++;
             }
         }
@@ -64,41 +73,49 @@ void computePi(string p, int m, vector<int> &pi)
 /// @param s The text string to search in
 /// @param p The pattern string to search for
 /// @return A vector of integers containing the starting indexes of all occurrences of the pattern in the text
-vector<int> findMatches(const string &s, const string &p)
+vector<int> findMatches(const string &str, const string &pattern)
 {
-    vector<int> res;
-    int n = s.size(); // Length of the text
-    int m = p.size(); // Length of the pattern
-    vector<int> pi(m);
+    vector<int> occurrences;
+    int stringLen = str.size();      // Length of the text
+    int patternLen = pattern.size(); // Length of the pattern
+    vector<int> lps(patternLen);     // LPS array for the pattern
 
-    computePi(p, m, pi);
+    computeLps(pattern, patternLen, lps);
+
+    if (DEBUG)
+    {
+        cout << "LPS array: ";
+        for (int i : lps)
+        {
+            cout << i << " ";
+        }
+        cout << nl;
+    }
 
     int i = 0; // Index for text
     int j = 0; // Index for pattern
-    while ((n - i) >= (m - j))
+    while ((stringLen - i) >= (patternLen - j))
     {
-        if (p[j] == s[i])
+        if (pattern[j] == str[i])
         {
             j++;
             i++;
         }
 
-        if (j == m)
+        if (j == patternLen)
         {
-            if (DEBUG)
-                printf("Found pattern at index %d \n", i - j);
-            res.push_back(i - j);
-            j = pi[j - 1];
+            occurrences.push_back(i - j);
+            j = lps[j - 1];
         }
-        else if (i < n && p[j] != s[i])
+        else if (i < stringLen && pattern[j] != str[i])
         {
             if (j != 0)
-                j = pi[j - 1];
+                j = lps[j - 1];
             else
-                i = i + 1;
+                i++;
         }
     }
-    return res;
+    return occurrences;
 }
 
 int main()
