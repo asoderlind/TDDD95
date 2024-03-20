@@ -1,8 +1,12 @@
-/** TDDD95: Lab 3.1 - stringmatching
+/** TDDD95: Lab 3.1 - String Matching
  * Author: Axel Söderlind
  * Date:   2024-03-20
- * This problem is about ...
+ * This program demonstrates the Knuth-Morris-Pratt (KMP) algorithm for string matching.
+ * It reads pairs of strings from standard input, where the first string in each pair is
+ * the pattern and the second is the text to search within. For each pair, the program outputs
+ * the starting indexes of all occurrences of the pattern within the text.
  */
+
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -22,18 +26,16 @@ constexpr ll INFLL = 0x3f3f3f3f3f3f3f3f;
 constexpr ll MOD = 998244353;
 constexpr ld EPS = 1e-9L;
 
-// ------------------------------------------- //
-
-/// @brief a function that computes the pi array for the KMP algorithm
-/// @param pat
-/// @param M
-/// @param lps
+/// @brief Computes the longest proper prefix that is also a suffix (LPS) array for the KMP algorithm
+/// @param p The pattern string
+/// @param m The length of the pattern
+/// @param pi Reference to an integer vector where the LPS array will be stored
 void computePi(string p, int m, vector<int> &pi)
 {
-    int len = 0; // length of the previous longest prefix suffix
-    pi[0] = 0;
+    int len = 0; // Length of the previous longest prefix suffix
+    pi[0] = 0;   // LPS[0] is always 0
 
-    // calculate pi[i] for i = 1 to m-1
+    // Calculate pi[i] for i = 1 to m-1
     int i = 1;
     while (i < m)
     {
@@ -43,19 +45,13 @@ void computePi(string p, int m, vector<int> &pi)
             pi[i] = len;
             i++;
         }
-        else // (pat[i] != pat[len])
+        else
         {
-            // This is tricky. Consider the example.
-            // AAACAAAA and i = 7. The idea is similar
-            // to search step.
             if (len != 0)
             {
                 len = pi[len - 1];
-
-                // Also, note that we do not increment
-                // i here
             }
-            else // if (len == 0)
+            else
             {
                 pi[i] = 0;
                 i++;
@@ -64,22 +60,21 @@ void computePi(string p, int m, vector<int> &pi)
     }
 }
 
-/// @brief a function that returns the indexes of all occurences of p in s
-/// @param s The string to search in
-/// @param p The pattern to search for
-/// @return A vector of indexes where p is found in s
+/// @brief Finds all occurrences of the pattern in the given text and returns their starting indexes
+/// @param s The text string to search in
+/// @param p The pattern string to search for
+/// @return A vector of integers containing the starting indexes of all occurrences of the pattern in the text
 vector<int> findMatches(const string &s, const string &p)
 {
     vector<int> res;
-    int n = s.size(); // length of string
-    int m = p.size(); // length of pattern
+    int n = s.size(); // Length of the text
+    int m = p.size(); // Length of the pattern
     vector<int> pi(m);
 
     computePi(p, m, pi);
-    // print pi
 
-    int i = 0; // index for txt[]
-    int j = 0; // index for pat[]
+    int i = 0; // Index for text
+    int j = 0; // Index for pattern
     while ((n - i) >= (m - j))
     {
         if (p[j] == s[i])
@@ -95,12 +90,8 @@ vector<int> findMatches(const string &s, const string &p)
             res.push_back(i - j);
             j = pi[j - 1];
         }
-
-        // mismatch after j matches
         else if (i < n && p[j] != s[i])
         {
-            // Do not match lps[0..lps[j-1]] characters,
-            // they will match anyway
             if (j != 0)
                 j = pi[j - 1];
             else
@@ -121,7 +112,7 @@ int main()
         cout << "DEBUG is on" << nl;
     }
 
-    // read input strings on two lines
+    // Continuously read pattern and text strings from standard input until an empty line is encountered
     string s, p;
     while (true)
     {
@@ -141,7 +132,7 @@ int main()
 
         vector<int> res = findMatches(s, p);
 
-        // print output
+        // Print the starting indexes of all occurrences of the pattern in the text
         for (int i : res)
         {
             cout << i << " ";
