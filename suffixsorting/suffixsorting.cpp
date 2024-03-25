@@ -70,7 +70,7 @@ struct SuffixArray
     int n;                 // length of the string
     vector<int> rank, pos; // output
 
-    vector<int> count, next;       // internal
+    vector<int> count, nextBucket; // internal
     vector<bool> bucketHeads, b2h; // internal
 
     bool smallerFirstChar(int a, int b) const
@@ -78,16 +78,69 @@ struct SuffixArray
         return str[a] < str[b];
     }
 
-    SuffixArray(string input) : str(input), n(input.size()), rank(input.size()), pos(input.size()), count(input.size()), next(input.size()), bucketHeads(input.size()), b2h(input.size())
+    SuffixArray(string input) : str(input), n(input.size()), rank(input.size()), pos(input.size()), count(input.size()), nextBucket(input.size()), bucketHeads(input.size()), b2h(input.size())
     {
         construct();
     }
 
-    void construct()
+    /// @brief Initialize the position array
+    void initPosArray()
     {
-        // Initial sorting of positions based on the characters at those positions.
         for (int i = 0; i < n; ++i)
             pos[i] = i;
+    }
+
+    /// @brief Initialize the bucket arrays
+    void initBucketArrays()
+    {
+        for (int i = 0; i < n; ++i)
+        {
+            // Mark the start of a new bucket if it's the
+            // first character or different from the previous one
+            bucketHeads[i] = i == 0 || str[pos[i]] != str[pos[i - 1]];
+            // Split no buckets initially
+            b2h[i] = false;
+        }
+    }
+
+    /// @brief Initialize the next bucket array
+    /// @return The number of buckets
+    int initNextBucketArrays()
+    {
+        int numBuckets = 0;
+
+        // Init next array, which points to the start of the next bucket
+        for (int i = 0, j; i < n; i = j)
+        {
+            j = i + 1;
+            // Find the end of the current bucket
+            while (j < n && !bucketHeads[j])
+                j++;
+            nextBucket[i] = j; // nextBucket[i] points to the start of the next bucket
+            numBuckets++;
+        }
+
+        return numBuckets;
+    }
+
+    /// @brief Assign ranks to the suffixes based on the buckets
+    void assignRanks()
+    {
+        for (int bucket = 0; bucket < n; bucket = nextBucket[bucket])
+        {
+            count[bucket] = 0; // Reset count for each bucket
+            for (int j = bucket; j < nextBucket[bucket]; ++j)
+            {
+                rank[pos[j]] = bucket; // Assign rank based on the bucket
+            }
+        }
+    }
+
+    void construct()
+    {
+
+        // Initial sorting of positions based on the characters at those positions.
+        initPosArray();
 
         if (DEBUG)
         {
@@ -106,14 +159,7 @@ struct SuffixArray
         }
 
         // Initialize bucket heads and whether a character is in a bucket to be split (b2h)
-        for (int i = 0; i < n; ++i)
-        {
-            // Mark the start of a new bucket if it's the
-            // first character or different from the previous one
-            bucketHeads[i] = i == 0 || str[pos[i]] != str[pos[i - 1]];
-            // Split no buckets initially
-            b2h[i] = false;
-        }
+        initBucketArrays();
 
         if (DEBUG)
         {
@@ -124,46 +170,35 @@ struct SuffixArray
         // we compare suffixes based on their first 2^h characters
         for (int h = 1; h < n; h <<= 1) // h <<= 1 is equivalent to doubling h
         {
-            int buckets = 0;
 
-            // Init next array, which points to the start of the next bucket
-            for (int i = 0, j; i < n; i = j)
-            {
-                j = i + 1;
-                // Find the end of the current bucket
-                while (j < n && !bucketHeads[j])
-                    j++;
-                next[i] = j; // next[i] points to the start of the next bucket
-                buckets++;   // Increase the number of buckets
-            }
+            int numBuckets = initNextBucketArrays();
 
             if (DEBUG)
             {
-                cout << "number of buckets: " << buckets << nl;
+                cout << "number of buckets: " << numBuckets << nl;
                 cout << "next bucket arr: ";
-                printIntVector(next);
+                printIntVector(nextBucket);
             }
 
-            if (buckets == n)
+            if (numBuckets == n)
                 break; // If all suffixes are in their own bucket, stop
 
-            // Assign ranks and prepare for the next phase
-            for (int bucket = 0; bucket < n; bucket = next[bucket])
+            // Assign ranks for the prefixes and prepare for the next phase
+            assignRanks();
+
+            if (DEBUG)
             {
-                count[bucket] = 0; // Reset count for each bucket
-                for (int j = bucket; j < next[bucket]; ++j)
-                {
-                    rank[pos[j]] = bucket; // Assign rank based on the bucket
-                }
+                cout << "rank arr: ";
+                printIntVector(rank);
             }
 
             // Count the number of elements to be inserted into each bucket
             // and mark them for the next phase
             count[rank[n - h]]++;
             b2h[rank[n - h]] = true;
-            for (int i = 0; i < n; i = next[i])
+            for (int i = 0; i < n; i = nextBucket[i])
             {
-                for (int j = i; j < next[i]; ++j)
+                for (int j = i; j < nextBucket[i]; ++j)
                 {
                     int s = pos[j] - h;
                     if (s >= 0)
@@ -174,7 +209,7 @@ struct SuffixArray
                     }
                 }
                 // Clear the b2h flags for ranks that won't be split in the next phase
-                for (int j = i; j < next[i]; ++j)
+                for (int j = i; j < nextBucket[i]; ++j)
                 {
                     int s = pos[j] - h;
                     if (s >= 0 && b2h[rank[s]])
