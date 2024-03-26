@@ -19,7 +19,7 @@ typedef long double ld;
 
 #define rep(i, a, b) for (int i = a; i < b; ++i)
 
-bool DEBUG = true;
+bool DEBUG = false;
 
 constexpr char nl = '\n';
 constexpr ll INF = 0x3f3f3f3f;
@@ -38,7 +38,7 @@ void printPos(string str, vector<int> &pos)
     cout << nl;
 }
 
-void printBucketHeads(vector<bool> &bucketHeads, vector<bool> &b2h)
+void printBucketHeads(vector<bool> &bucketHeads, vector<bool> &splitBucket)
 {
     cout << "bucketHeads: ";
     for (int i = 0; i < bucketHeads.size(); i++)
@@ -47,15 +47,24 @@ void printBucketHeads(vector<bool> &bucketHeads, vector<bool> &b2h)
     }
     cout << nl;
 
-    cout << "b2h: ";
-    for (int i = 0; i < b2h.size(); i++)
+    cout << "splitBucket: ";
+    for (int i = 0; i < splitBucket.size(); i++)
     {
-        cout << b2h[i] << " ";
+        cout << splitBucket[i] << " ";
     }
     cout << nl;
 }
 
 void printIntVector(vector<int> &v)
+{
+    for (int i = 0; i < v.size(); i++)
+    {
+        cout << v[i] << " ";
+    }
+    cout << nl;
+}
+
+void printBoolVector(vector<bool> &v)
 {
     for (int i = 0; i < v.size(); i++)
     {
@@ -70,15 +79,15 @@ struct SuffixArray
     int n;                 // length of the string
     vector<int> rank, pos; // output
 
-    vector<int> count, nextBucket; // internal
-    vector<bool> bucketHeads, b2h; // internal
+    vector<int> count, nextBucket;         // internal
+    vector<bool> bucketHeads, splitBucket; // internal
 
     bool smallerFirstChar(int a, int b) const
     {
         return str[a] < str[b];
     }
 
-    SuffixArray(string input) : str(input), n(input.size()), rank(input.size()), pos(input.size()), count(input.size()), nextBucket(input.size()), bucketHeads(input.size()), b2h(input.size())
+    SuffixArray(string input) : str(input), n(input.size()), rank(input.size()), pos(input.size()), count(input.size()), nextBucket(input.size()), bucketHeads(input.size()), splitBucket(input.size())
     {
         construct();
     }
@@ -99,13 +108,13 @@ struct SuffixArray
             // first character or different from the previous one
             bucketHeads[i] = i == 0 || str[pos[i]] != str[pos[i - 1]];
             // Split no buckets initially
-            b2h[i] = false;
+            splitBucket[i] = false;
         }
     }
 
     /// @brief Initialize the next bucket array
     /// @return The number of buckets
-    int initNextBucketArrays()
+    int initNextBucketArray()
     {
         int numBuckets = 0;
 
@@ -142,12 +151,6 @@ struct SuffixArray
         // Initial sorting of positions based on the characters at those positions.
         initPosArray();
 
-        if (DEBUG)
-        {
-            cout << "Initial pos:" << nl;
-            printPos(str, pos);
-        }
-
         // Sort positions based on the characters, using a lambda function for comparison
         sort(pos.begin(), pos.end(), [this](int a, int b)
              { return smallerFirstChar(a, b); });
@@ -158,64 +161,51 @@ struct SuffixArray
             printPos(str, pos);
         }
 
-        // Initialize bucket heads and whether a character is in a bucket to be split (b2h)
+        // Initialize bucket heads and whether a character is in a bucket to be split (splitBucket)
         initBucketArrays();
 
         if (DEBUG)
         {
-            printBucketHeads(bucketHeads, b2h);
+            printBucketHeads(bucketHeads, splitBucket);
         }
 
         // Doubling loop: in each iteration,
         // we compare suffixes based on their first 2^h characters
         for (int h = 1; h < n; h <<= 1) // h <<= 1 is equivalent to doubling h
         {
-
-            int numBuckets = initNextBucketArrays();
-
-            if (DEBUG)
-            {
-                cout << "number of buckets: " << numBuckets << nl;
-                cout << "next bucket arr: ";
-                printIntVector(nextBucket);
-            }
+            int numBuckets = initNextBucketArray();
 
             if (numBuckets == n)
                 break; // If all suffixes are in their own bucket, stop
 
-            // Assign ranks for the prefixes and prepare for the next phase
+            // Assign ranks based on the buckets for the prefixes and prepare for the next phase
             assignRanks();
-
-            if (DEBUG)
-            {
-                cout << "rank arr: ";
-                printIntVector(rank);
-            }
 
             // Count the number of elements to be inserted into each bucket
             // and mark them for the next phase
             count[rank[n - h]]++;
-            b2h[rank[n - h]] = true;
-            for (int i = 0; i < n; i = nextBucket[i])
+            splitBucket[rank[n - h]] = true;
+
+            for (int bucket = 0; bucket < n; bucket = nextBucket[bucket])
             {
-                for (int j = i; j < nextBucket[i]; ++j)
+                for (int j = bucket; j < nextBucket[bucket]; ++j)
                 {
-                    int s = pos[j] - h;
+                    int s = pos[j] - h; // The suffix that is 2^h characters before the current suffix
                     if (s >= 0)
                     {
                         int head = rank[s];
                         rank[s] = head + count[head]++;
-                        b2h[rank[s]] = true; // Mark to indicate it's in a bucket to be split
+                        splitBucket[rank[s]] = true; // Mark to indicate it's in a bucket to be split
                     }
                 }
-                // Clear the b2h flags for ranks that won't be split in the next phase
-                for (int j = i; j < nextBucket[i]; ++j)
+                // Clear the splitBucket flags for ranks that won't be split in the next phase
+                for (int j = bucket; j < nextBucket[bucket]; ++j)
                 {
                     int s = pos[j] - h;
-                    if (s >= 0 && b2h[rank[s]])
+                    if (s >= 0 && splitBucket[rank[s]])
                     {
-                        for (int k = rank[s] + 1; !bucketHeads[k] && b2h[k]; k++)
-                            b2h[k] = false;
+                        for (int k = rank[s] + 1; !bucketHeads[k] && splitBucket[k]; k++)
+                            splitBucket[k] = false;
                     }
                 }
             }
@@ -224,7 +214,7 @@ struct SuffixArray
             {
                 pos[rank[i]] = i; // Update positions based on ranks
                 // Update bucketHeads to reflect the new bucket heads after splitting
-                bucketHeads[i] = bucketHeads[i] | b2h[i];
+                bucketHeads[i] = bucketHeads[i] | splitBucket[i];
             }
         }
         // Finalize the ranks for all positions

@@ -7,6 +7,9 @@
  * sorted list of all suffixes of s. That is, the suffix array is an array of i
  * ntegers p0, p1, . . . , pn−1 such that the suffixes s[p0], s[p1], . . . , s[pn−1]
  * are sorted in lexicographical order.
+ *
+ * Time complexity O(n * logn * logn)
+ * Space complexity O(n)
  */
 #include <iostream>
 #include <vector>
@@ -19,7 +22,7 @@ typedef long double ld;
 
 #define rep(i, a, b) for (int i = a; i < b; ++i)
 
-bool DEBUG = true;
+bool DEBUG = false;
 
 constexpr char nl = '\n';
 constexpr ll INF = 0x3f3f3f3f;
@@ -29,65 +32,24 @@ constexpr ld EPS = 1e-9L;
 
 // ------------------------------------------- //
 
-void printPos(string str, vector<int> &pos)
-{
-    for (int i = 0; i < pos.size(); i++)
-    {
-        cout << pos[i] << ": " << str.substr(pos[i]) << nl;
-    }
-    cout << nl;
-}
-
-void printBucketHeads(vector<bool> &bucketHeads, vector<bool> &b2h)
-{
-    cout << "bucketHeads: ";
-    for (int i = 0; i < bucketHeads.size(); i++)
-    {
-        cout << bucketHeads[i] << " ";
-    }
-    cout << nl;
-
-    cout << "b2h: ";
-    for (int i = 0; i < b2h.size(); i++)
-    {
-        cout << b2h[i] << " ";
-    }
-    cout << nl;
-}
-
-void printIntVector(vector<int> &v)
-{
-    for (int i = 0; i < v.size(); i++)
-    {
-        cout << v[i] << " ";
-    }
-    cout << nl;
-}
-
 struct suffix
 {
     int index;   // To store original index
     int rank[2]; // To store ranks and next rank pair
 };
 
-// A comparison function used by sort() to compare two suffixes
 // Compares two pairs, returns 1 if first pair is smaller
-int cmp(struct suffix a, struct suffix b)
+int cmpSuffixPairs(struct suffix a, struct suffix b)
 {
     return (a.rank[0] == b.rank[0]) ? (a.rank[1] < b.rank[1] ? 1 : 0) : (a.rank[0] < b.rank[0] ? 1 : 0);
 }
 
 struct SuffixArray
 {
-    string str;       // input
-    int n;            // length of the string
-    suffix *suffixes; // output
+    string str; // input
+    int n;      // length of the string
+    suffix *suffixes;
     vector<int> suffixArr;
-
-    bool smallerFirstChar(int a, int b) const
-    {
-        return str[a] < str[b];
-    }
 
     SuffixArray(string input) : str(input), n(input.size()), suffixes(new suffix[n]), suffixArr(n)
     {
@@ -96,33 +58,26 @@ struct SuffixArray
 
     void construct()
     {
-        // Store suffixes and their indexes in an array of structures.
-        // The structure is needed to sort the suffixes alphabetically
-        // and maintain their old indexes while sorting
         for (int i = 0; i < n; i++)
         {
             suffixes[i].index = i;
-            suffixes[i].rank[0] = str[i] - 'a';
-            suffixes[i].rank[1] = ((i + 1) < n) ? (str[i + 1] - 'a') : -1;
+            suffixes[i].rank[0] = str[i] - 'a';                            // store ASCII value of char as rank
+            suffixes[i].rank[1] = ((i + 1) < n) ? (str[i + 1] - 'a') : -1; // value of adjascent char
         }
 
-        // Sort the suffixes using the comparison function
-        // defined above.
-        sort(suffixes, suffixes + n, cmp);
+        sort(suffixes, suffixes + n, cmpSuffixPairs); // sort according to rank and next rank
 
-        // At this point, all suffixes are sorted according to first
-        // 2 characters.  Let us sort suffixes according to first 4
-        // characters, then first 8 and so on
-        int ind[n]; // This array is needed to get the index in suffixes[]
-                    // from original index.  This mapping is needed to get
-                    // next suffix.
-        for (int k = 4; k < 2 * n; k = k * 2)
+        if (DEBUG)
+            printSuffixes();
+
+        int suffixMap[n]; // map original suffix index to suffixes[] index
+        for (int h = 4; h < 2 * n; h = h * 2)
         {
             // Assigning rank and index values to first suffix
             int rank = 0;
             int prev_rank = suffixes[0].rank[0];
             suffixes[0].rank[0] = rank;
-            ind[suffixes[0].index] = 0;
+            suffixMap[suffixes[0].index] = 0;
 
             // Assigning rank to suffixes
             for (int i = 1; i < n; i++)
@@ -140,18 +95,21 @@ struct SuffixArray
                     prev_rank = suffixes[i].rank[0];
                     suffixes[i].rank[0] = ++rank;
                 }
-                ind[suffixes[i].index] = i;
+                suffixMap[suffixes[i].index] = i;
             }
 
             // Assign next rank to every suffix
             for (int i = 0; i < n; i++)
             {
-                int nextindex = suffixes[i].index + k / 2;
-                suffixes[i].rank[1] = (nextindex < n) ? suffixes[ind[nextindex]].rank[0] : -1;
+                int nextindex = suffixes[i].index + h / 2;
+                suffixes[i].rank[1] = (nextindex < n) ? suffixes[suffixMap[nextindex]].rank[0] : -1;
             }
 
-            // Sort the suffixes according to first k characters
-            sort(suffixes, suffixes + n, cmp);
+            // Sort the suffixes according to first h characters
+            sort(suffixes, suffixes + n, cmpSuffixPairs);
+
+            if (DEBUG)
+                printSuffixes();
         }
 
         // Store indexes of all sorted suffixes in the suffix array
@@ -162,6 +120,26 @@ struct SuffixArray
     int getSuffix(int i)
     {
         return suffixArr[i];
+    }
+
+    void printSuffixes()
+    {
+        cout << "index\trank1\trank2" << nl;
+        for (int i = 0; i < n; i++)
+        {
+            cout << suffixes[i].index << "\t" << suffixes[i].rank[0] << "\t" << suffixes[i].rank[1] << nl;
+        }
+        cout << nl;
+    }
+
+    void printSuffixArray()
+    {
+        cout << "suffixArr: " << nl;
+        for (int i = 0; i < suffixArr.size(); i++)
+        {
+            cout << suffixArr[i] << " ";
+        }
+        cout << nl;
     }
 };
 
@@ -185,6 +163,12 @@ int main()
         }
 
         SuffixArray suffixObject(s);
+
+        if (DEBUG)
+        {
+            suffixObject.printSuffixArray();
+            suffixObject.printSuffixes();
+        }
 
         int n;
         cin >> n;
