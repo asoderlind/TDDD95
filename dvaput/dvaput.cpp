@@ -1,10 +1,12 @@
-/** TDDD95: Lab 3 - suffixsorting
+/** TDDD95: Lab 3 - dvaput
  * Author: Axel Söderlind
  * Date:   2024-03-26
- * This problem is about creating and querying a suffix array.
+ * This problem is getting the longest common prefix of a string.
  * We implement the prefix doubling algorithm to create the suffix array.
+ * We then use the suffix array to get the longest common prefix.
+ * Using the Kasai algorithm.
  *
- * Time complexity O(nlogn)
+ * Time complexity O(n) after constructing suffix arr in O(nlogn)
  * Space complexity O(n)
  */
 #include <iostream>
@@ -119,6 +121,45 @@ struct SuffixArray
         return suffixArr[i];
     }
 
+    /// @brief Get the longest common prefix array
+    /// @return vector<int> lcp array
+    vector<int> getLcpArray()
+    {
+        vector<int> lcp(n, 0), ranks(n, 0);
+
+        // Fill the ranks for each suffix
+        for (int i = 0; i < n; ++i)
+            ranks[suffixArr[i]] = i;
+
+        int k = 0;
+        for (int i = 0; i < n; ++i)
+        {
+            // If the current suffix is at n-1, then we don't have next suffix
+            if (ranks[i] == n - 1)
+            {
+                k = 0;
+                continue;
+            }
+
+            // Get the next suffix in the suffix array
+            int j = suffixArr[ranks[i] + 1];
+
+            // Find the longest common prefix between the current suffix and the next suffix
+            while (i + k < n &&
+                   j + k < n &&
+                   str[i + k] == str[j + k])
+                k++;
+
+            // Store the lcp between the current suffix and the next suffix
+            lcp[ranks[i]] = k;
+
+            if (k > 0)
+                --k;
+        }
+
+        return lcp;
+    }
+
     void printSuffixes()
     {
         cout << "index\trank1\trank2" << nl;
@@ -146,38 +187,39 @@ int main()
     std::cin.tie(NULL);
     std::cout.tie(NULL);
 
-    while (true)
+    // length of the string
+    int n;
+    cin >> n;
+
+    string w;
+    getline(cin, w); // consume newline
+
+    if (DEBUG)
+        cout << "n: " << n << nl;
+
+    // read input
+    string s;
+    getline(cin, s);
+    if (DEBUG)
+        cout << "s: " << s << nl;
+
+    SuffixArray suffixObject(s);
+
+    if (DEBUG)
     {
-        string s;
-        getline(cin, s);
-        if (DEBUG)
-        {
-            cout << "s: " << s << nl;
-        }
-        if (s.empty())
-        {
-            break;
-        }
-
-        SuffixArray suffixObject(s);
-
-        if (DEBUG)
-        {
-            suffixObject.printSuffixArray();
-            suffixObject.printSuffixes();
-        }
-
-        int n;
-        cin >> n;
-        for (int i = 0; i < n; i++)
-        {
-            int x;
-            cin >> x;
-            cout << suffixObject.getSuffix(x) << " ";
-        }
-        cout << nl;
-        getline(cin, s);
+        suffixObject.printSuffixArray();
+        suffixObject.printSuffixes();
     }
+
+    vector<int> lcp = suffixObject.getLcpArray();
+
+    int m = 0; // max lcp
+    for (int i = 0; i < lcp.size(); ++i)
+    {
+        m = max(m, lcp[i]);
+    }
+
+    cout << m << nl;
 
     return 0;
 }

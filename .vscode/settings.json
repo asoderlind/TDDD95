@@ -3,6 +3,7 @@
     "vector": "cpp",
     "ios": "cpp",
     "queue": "cpp",
-    "locale": "cpp"
+    "locale": "cpp",
+    "iostream": "cpp"
   }
 }
