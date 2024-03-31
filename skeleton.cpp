@@ -3,9 +3,9 @@
  * Date:   2024-01-22
  * This problem is about ...
  */
+#include <algorithm>
 #include <iostream>
 #include <vector>
-#include <algorithm>
 
 using namespace std;
 
@@ -24,13 +24,12 @@ constexpr ld EPS = 1e-9L;
 
 // ------------------------------------------- //
 
-int main()
-{
-    std::ios::sync_with_stdio(false);
-    std::cin.tie(NULL);
-    std::cout.tie(NULL);
+int main() {
+  std::ios::sync_with_stdio(false);
+  std::cin.tie(NULL);
+  std::cout.tie(NULL);
 
-    // read input
+  // read input
 
-    return 0;
+  return 0;
 }
