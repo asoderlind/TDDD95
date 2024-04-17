@@ -1,13 +1,10 @@
-/** TDDD95: Lab X - <name>
- * Author: Axel Söderlind
- * Date:   2024-01-22
- * This problem is about ...
- */
 #include <algorithm>
 #include <iostream>
 #include <vector>
 
 using namespace std;
+
+// Begin template code
 
 typedef long long ll;
 typedef long double ld;
@@ -22,7 +19,7 @@ constexpr ll INFLL = 0x3f3f3f3f3f3f3f3f;
 constexpr ll MOD = 998244353;
 constexpr ld EPS = 1e-9L;
 
-// ------------------------------------------- //
+// end template code
 
 int main() {
   std::ios::sync_with_stdio(false);
